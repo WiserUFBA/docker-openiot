@@ -1,6 +1,5 @@
 # OpenIoT Docker Image
---
 
-# Introduction
+## Introduction
 
 OpenIoT is a application...
