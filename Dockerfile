@@ -23,8 +23,8 @@ FROM ubuntu:14.04
 # Home das Aplicações necessárias
 ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
 ENV MAVEN_HOME /usr/share/maven3
+ENV VIRTUOSO_HOME /usr/local/virtuoso-opensource
 ENV JBOSS_HOME /opt/jboss
-ENV VIRTUOSO_HOME /opt/virtuoso
 ENV OPENIOT_HOME /opt/openiot
 
 # Especificado a home dessas aplicações iremos começar a instalação das mesmas
@@ -85,8 +85,6 @@ RUN cd /tmp && \
 # Criar as pastas para cada aplicação
 RUN mkdir /opt/jboss && \
     mkdir /opt/openiot && \
-    mkdir /opt/virtuoso
-
 
 
 # References
