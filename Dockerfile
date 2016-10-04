@@ -21,7 +21,7 @@ FROM ubuntu:14.04
 # execução do OpenIoT
 
 # Home das Aplicações necessárias
-ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
+ENV JAVA_HOME /usr/lib/jvm/java-7-oracle
 ENV MAVEN_HOME /usr/share/maven3
 ENV VIRTUOSO_HOME /usr/local/virtuoso-opensource
 ENV JBOSS_HOME /opt/jboss
@@ -44,12 +44,12 @@ RUN apt-get update && \
 # Instalação do Java 8
 
 # Para a Instalação do JAVA 8 é necessário primeiro aceitar a licença do java
-RUN echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 " \
+RUN echo "oracle-java7-installer shared/accepted-oracle-license-v1-1 " \
          "select true" | /usr/bin/debconf-set-selections
 
-# Agora instalamos o Java 8 e o Maven 3
-RUN apt-get install -y oracle-java8-installer && \
-    apt-get install -y oracle-java8-set-default && \
+# Agora instalamos o Java 7 e o Maven 3
+RUN apt-get install -y oracle-java7-installer && \
+    apt-get install -y oracle-java7-set-default && \
     apt-get install -y maven3
 
 # 4 Passo - Instalação do Virtuoso
@@ -81,6 +81,20 @@ RUN cd /tmp && \
     make && \
     make install && \
     rm -r /tmp/virtuoso_install
+
+# Adiciona o virtuoso
+ENV PATH $VIRTUOSO_HOME/bin/:$PATH
+
+# Adiciona script de inicialização
+ADD virtuoso-service /etc/init.d/virtuoso-service
+
+# Dar as corretas permissões ao projeto
+RUN chmod 755 /etc/init.d/virtuoso-service && \
+    chown root:root /etc/init.d/virtuoso-service && \
+    update-rc.d virtuoso-service defaults
+
+# Adiciona arquivo de configuração do virtuoso
+ADD virtuoso.ini /etc/virtuoso.ini
 
 # Criar as pastas para cada aplicação
 RUN mkdir /opt/jboss && \
