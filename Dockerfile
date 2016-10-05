@@ -102,7 +102,6 @@ RUN useradd virtuoso --home $VIRTUOSO_HOME && \
     chown -R virtuoso $VIRTUOSO_HOME
 
 # Inicializa o serviço do virtuoso e espera 15 segundos para a conclusão
-
 RUN service virtuoso-service start && \
     sleep 15
 

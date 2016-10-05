@@ -23,7 +23,7 @@
 # Suite 330, Boston, MA 02111-1307 USA
 #
 ### BEGIN INIT INFO
-# Provides:          virtuoso-opensource-6.1
+# Provides:          virtuoso-opensource-7.2
 # Required-Start:    $network $local_fs $remote_fs
 # Required-Stop:     $remote_fs
 # Should-Start:      $named
@@ -41,7 +41,7 @@ BASEPATH=/usr/local/virtuoso-opensource
 DAEMON=${BASEPATH}/bin/virtuoso-t
 NAME=virtuoso
 SHORTNAME=virtuoso
-DESC="Virtuoso OpenSource Edition 6.1"
+DESC="Virtuoso OpenSource Edition 7.2"
 DBPATH=${BASEPATH}/var/lib/virtuoso/db
 LOGDIR=${BASEPATH}/var/log  # Log directory to use
 
@@ -49,6 +49,7 @@ PIDFILE=/var/run/$NAME.pid
 
 test -x $DAEMON || exit 0
 
+# shellcheck disable=SC1091
 . /lib/lsb/init-functions
 
 # Default options, these can be overriden by the information
@@ -69,18 +70,21 @@ STARTTIME=1             # Time to wait for the server to start, in seconds
                         # be a false positive (says it did not start
                         # when it actually did)
 
-LOGFILE=$LOGDIR/$NAME.log  # Server logfile
-DAEMONUSER=$NAME   # Users to run the daemons as. If this value
-                        # is set start-stop-daemon will chuid the server
+# shellcheck disable=SC2034
+LOGFILE="$LOGDIR/$NAME.log"     # Server logfile
+DAEMONUSER=$NAME                # Users to run the daemons as. If this value
+                                # is set start-stop-daemon will chuid the server
 
 # Include defaults if available
 if [ -f /etc/default/$NAME ] ; then
+    # shellcheck disable=SC1090
     . /etc/default/$NAME
 fi
 
 # Use this if you want the user to explicitly set 'RUN' in
 # /etc/default/
-if [ "x$RUN" != "xyes" -a "x$2" != "xignoredefault" ] ; then
+if [ "x$RUN" != "xyes" ] && [ "x$2" != "xignoredefault" ]
+then
     log_failure_msg "$NAME disabled, /etc/default/$NAME."
     exit 0
 fi
@@ -90,14 +94,15 @@ fi
 if [ -n "$DAEMONUSER" ] ; then
     if getent passwd | grep -q "^$DAEMONUSER:"; then
         # Obtain the uid and gid
-        DAEMONUID=`getent passwd |grep "^$DAEMONUSER:" | awk -F : '{print $3}'`
-        DAEMONGID=`getent passwd |grep "^$DAEMONUSER:" | awk -F : '{print $4}'`
+        # shellcheck disable=SC2034
+        DAEMONUID=$(getent passwd |grep "^$DAEMONUSER:" | awk -F : '{print $3}')
+        # shellcheck disable=SC2034
+        DAEMONGID=$(getent passwd |grep "^$DAEMONUSER:" | awk -F : '{print $4}')
     else
         log_failure_msg "The user $DAEMONUSER, required to run $NAME does not exist."
         exit 1
     fi
 fi
-
 
 set -e
 
@@ -106,8 +111,8 @@ running_pid() {
     pid=$1
     name=$2
     [ -z "$pid" ] && return 1
-    [ ! -d /proc/$pid ] &&  return 1
-    cmd=`cat /proc/$pid/cmdline | tr "\000" "\n"|head -n 1 |cut -d : -f 1`
+    [ ! -d "/proc/$pid" ] &&  return 1
+    cmd=$(cmd "/proc/$pid/cmdline" | tr "\000" "\n"|head -n 1 |cut -d : -f 1)
     # Is this the expected server
     [ "$cmd" != "$name" ] &&  return 1
     return 0
@@ -119,25 +124,25 @@ running() {
 
     # No pidfile, probably no daemon present
     [ ! -f "$PIDFILE" ] && return 1
-    pid=`cat $PIDFILE`
-    running_pid $pid $DAEMON || return 1
+    pid="$(cat $PIDFILE)"
+    running_pid "$pid $DAEMON" || return 1
     return 0
 }
 
 start_server() {
 # Start the process using the wrapper
         if [ -z "$DAEMONUSER" ] ; then
-            start-stop-daemon --start --quiet \
-                        --user `id -un` \
-                        --chdir $DBPATH --exec $DAEMON \
-                        -- $DAEMON_OPTS
+            start-stop-daemon   --start --quiet \
+                                --user "$(id -un)" \
+                                --chdir $DBPATH --exec $DAEMON \
+                                -- $DAEMON_OPTS
             errcode=$?
         else
 # if we are using a daemonuser then change the user id
-            start-stop-daemon --start --quiet \
-                        --user $DAEMONUSER --chuid $DAEMONUSER \
-                        --chdir $DBPATH --exec $DAEMON \
-                        -- $DAEMON_OPTS
+            start-stop-daemon   --start --quiet \
+                                --user $DAEMONUSER --chuid $DAEMONUSER \
+                                --chdir $DBPATH --exec $DAEMON \
+                                -- $DAEMON_OPTS
             errcode=$?
         fi
         # Write the pid file using the process id from virtuoso.lck
@@ -152,9 +157,9 @@ stop_server() {
             errcode=$?
         else
 # if we are using a daemonuser then look for process that match
-            start-stop-daemon --stop --quiet --pidfile $PIDFILE \
-                        --user $DAEMONUSER \
-                        --exec $DAEMON
+            start-stop-daemon   --stop --quiet --pidfile $PIDFILE \
+                                --user $DAEMONUSER \
+                                --exec $DAEMON
             errcode=$?
         fi
 
@@ -166,7 +171,7 @@ reload_server() {
     [ ! -f "$PIDFILE" ] && return 1
     pid=pidofproc $PIDFILE # This is the daemon's pid
     # Send a SIGHUP
-    kill -1 $pid
+    kill -1 "$pid"
     return $?
 }
 
@@ -174,21 +179,20 @@ force_stop() {
 # Force the process to die killing it manually
     [ ! -e "$PIDFILE" ] && return
     if running ; then
-        kill -15 $pid
+        kill -15 "$pid"
         # Is it really dead?
         sleep "$DIETIME"s
         if running ; then
-            kill -9 $pid
+            kill -9 "$pid"
             sleep "$DIETIME"s
             if running ; then
-                echo "Cannot kill $NAME (pid=$pid)!"
+                echo "Cannot kill $NAME (pid=$pid)\!"
                 exit 1
             fi
         fi
     fi
     rm -f $PIDFILE
 }
-
 
 case "$1" in
   start)
@@ -253,7 +257,6 @@ case "$1" in
         log_end_msg $errcode
         ;;
   status)
-
         log_daemon_msg "Checking status of $DESC" "$NAME"
         if running ;  then
             log_progress_msg "running"
@@ -268,7 +271,7 @@ case "$1" in
   reload)
         log_warning_msg "Reloading $NAME daemon: not implemented, as the daemon"
         log_warning_msg "cannot re-read the config file (use restart)."
-        ;;    
+        ;;
   *)
         N=/etc/init.d/$NAME
         echo "Usage: $N {start|stop|force-stop|restart|force-reload|status}" >&2
