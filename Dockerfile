@@ -99,7 +99,7 @@ RUN printf "RUN=yes\n" > /etc/default/virtuoso
 
 # Cria o usuario virtuoso e adiciona as permissões para a DB
 RUN useradd virtuoso --home $VIRTUOSO_HOME && \
-    chown -R virtuoso $VIRTUOSO_HOME
+    chown -R virtuoso:virtuoso $VIRTUOSO_HOME
 
 # Inicializa o serviço do virtuoso e espera 15 segundos para a conclusão
 RUN service virtuoso-service start && \
@@ -135,18 +135,25 @@ RUN mkdir /tmp/jboss_install && \
     wget -O jboss-install.zip $JBOSS_DOWNLOAD_LINK && \
     unzip jboss-install.zip && \
     mv jboss-as-7.1.1.Final $JBOSS_HOME && \
-    rm -r /tmp/jboss_install
-
-# Adiciona o script de inicialização do JBOSS
-RUN cp $JBOSS_HOME/bin/init.d/jboss-as-standalone.sh /etc/init.d/jboss-service &&\
+    rm -r /tmp/jboss_install && \
     mkdir /etc/jboss-as && \
-    cp $JBOSS_HOME/bin/init.d/jboss-as.conf /etc/jboss-as/ && \
-    chmod 755 /etc/init.d/jboss-service && \
+    mkdir /var/log/jboss-as/
+
+# Adiciona o script de inicialização do JBOSS e a configuração
+ADD jboss-service /etc/init.d/jboss-service
+ADD jboss-as.conf /etc/jboss-as/jboss-as.conf
+
+# Cria os arquivos de configuração para o JBOSS
+RUN chmod 755 /etc/init.d/jboss-service && \
     chown root:root /etc/init.d/jboss-service && \
     update-rc.d jboss-service defaults
 
-# Executa o serviço do virtuoso
-RUN service virtuoso-service start && \
+# Cria o usuario virtuoso e adiciona as permissões para a DB
+RUN useradd jboss --home $JBOSS_HOME && \
+    chown -R jboss:jboss $VIRTUOSO_HOME
+
+# Executa o serviço do jboss
+RUN service jboss-service start && \
     sleep 15
 
 # Expõe a porta do JBOSS
@@ -167,5 +174,4 @@ RUN mkdir /opt/openiot
 # https://hub.docker.com/r/jboss/base/
 # https://hub.docker.com/r/jboss/base/~/dockerfile/
 # https://hub.docker.com/r/tenforce/virtuoso/~/dockerfile/
-
 
