@@ -150,11 +150,10 @@ RUN chmod 755 /etc/init.d/jboss-service && \
 
 # Cria o usuario virtuoso e adiciona as permissões para a DB
 RUN useradd jboss --home $JBOSS_HOME && \
-    chown -R jboss:jboss $VIRTUOSO_HOME
+    chown -R jboss:jboss $JBOSS_HOME
 
 # Executa o serviço do jboss
-RUN service jboss-service start && \
-    sleep 15
+RUN service jboss-service start
 
 # Expõe a porta do JBOSS
 EXPOSE 8080
