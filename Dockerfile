@@ -27,7 +27,8 @@ ENV VIRTUOSO_HOME /usr/local/virtuoso-opensource
 ENV JBOSS_HOME /opt/jboss
 ENV OPENIOT_HOME /opt/openiot
 
-# Especificado a home dessas aplicações iremos começar a instalação das mesmas
+# Usuario Administrador Virtuoso
+ENV VIRTUOSO_DBA wiser2014
 
 # 2 Passo - Instalação dos pré requisitos comuns
 # ---------------------------------------------------------------------------
@@ -93,13 +94,35 @@ RUN chmod 755 /etc/init.d/virtuoso-service && \
     chown root:root /etc/init.d/virtuoso-service && \
     update-rc.d virtuoso-service defaults
 
-# Adiciona arquivo de configuração do virtuoso
-ADD virtuoso.ini /etc/virtuoso.ini
+# Adiciona a permissão de inicialização
+RUN printf "RUN=yes\n" > /etc/default/virtuoso
 
-# Criar as pastas para cada aplicação
-RUN mkdir /opt/jboss && \
-    mkdir /opt/openiot && \
+# Cria o usuario virtuoso e adiciona as permissões para a DB
+RUN useradd virtuoso --home $VIRTUOSO_HOME && \
+    chown -R virtuoso $VIRTUOSO_HOME
 
+# Inicializa o serviço do virtuoso e espera 15 segundos para a conclusão
+RUN service virtuoso-service start && \
+    sleep 15
+
+# Configura o usuario padrão do virtuoso e configuração do OpenIoT
+ADD virtuoso_config.sh /tmp/virtuoso_config.sh
+
+# 5 Passo - Instalação do JBOSS
+# ---------------------------------------------------------------------------
+# Instalação do JBOSS
+
+# Criar a pasta para o JBOSS
+RUN mkdir /opt/jboss
+
+
+
+# 6 Passo - Instalação do OpenIot
+# ---------------------------------------------------------------------------
+# Instalação completa do OpenIoT e seus modulos
+
+# Cria a pasta para a aplicação
+RUN mkdir /opt/openiot
 
 # References
 # https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images

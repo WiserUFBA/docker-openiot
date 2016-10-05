@@ -1,0 +1,148 @@
+#!/bin/sh
+#
+# OpenLink Virtuoso init.d script with LSB support.
+#
+# Please read this init.d carefully and modify the sections to
+# adjust it to the program you want to run.
+#
+# Copyright (c) 2016 Jeferson Lima de Almeida <jefersonlimaa@dcc.ufba.br>
+#
+# This is free software; you may redistribute it and/or modify
+# it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2,
+# or (at your option) any later version.
+#
+# This is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License with
+# the Debian operating system, in /usr/share/common-licenses/GPL;  if
+# not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307 USA
+#
+### BEGIN INIT INFO
+# Provides:             virtuoso-opensource-7.2
+# Required-Start:       $syslog $local_fs $network
+# Should-Start:         $remote_fs
+# Required-Stop:        $network
+# Should-Stop:          $remote_fs
+# Default-Start:        3 4 5
+# Default-Stop:         0 1 2 6
+# Short-Description:    Virtuoso OpenSource Edition
+# Description:          This file should be used to start/stop the virtuoso-t
+#                       daemon for the default installed database.
+### END INIT INFO
+
+# Base Configuration
+VIRTUOSO_HOME=/usr/local/virtuoso-opensource
+VIRTUOSO_DB=${VIRTUOSO_HOME}/var/lib/virtuoso/db
+DAEMON=${VIRTUOSO_HOME}/bin/virtuoso-t
+NAME="virtuoso-service"
+SHORTNAME="virtuoso"
+DESC="Virtuoso OpenSource Edition 7.2"
+
+PIDFILE=/var/run/$NAME.pid
+
+# JUST TO IGNORE WARNINGS. SHOULD BE REMOVED!
+export SHORTNAME
+export VIRTUOSO_DB
+export DESC
+
+# Check if DAEMON exist and can be executed
+if ! test -x $DAEMON
+then
+    printf "Daemon %s can't be executed or don't exist\n" $DAEMON
+    exit 5
+fi
+
+# Load init-functions
+# shellcheck disable=SC1091
+. /lib/lsb/init-functions
+
+# Get Pid Number
+get_pid() {
+   [ -f "$PIDFILE" ] &&  cmd "$PIDFILE" | sed -e 's/[^0-9]//g'
+}
+
+# Check if the daemon is running
+is_running() {
+    [ -f "$PIDFILE" ] && ps "$(get_pid)" > /dev/null 2>&1
+}
+
+# Execut the service daemon
+case "$1" in
+    start)
+        if is_running; then
+            echo "Already started with pid $(get_pid)"
+        else
+            echo "Starting $NAME"
+            daemon --user virtuoso "$DAEMON"
+        fi
+        ;;
+    stop)
+        if is_running; then
+            printf "Stopping %s." "$NAME"
+            kill "$(get_pid)"
+
+            # Range of execution
+            RANGE="1 2 3 4 5 6 7 8 9 10"
+
+            # Remove warning about i not used
+            # shellcheck disable=SC2034
+            for i in $RANGE
+            do
+                if ! is_running
+                then
+                    break
+                fi
+
+                printf "."
+                sleep 1
+            done
+
+            printf "\n"
+
+            if is_running
+            then
+                echo "Not stopped; may still be shutting down or shutdown may have failed"
+                exit 1
+            else
+                echo "Stopped"
+                if [ -f "$PIDFILE" ]; then
+                    rm "$PIDFILE"
+                fi
+            fi
+        else
+            echo "Not running"
+        fi
+        ;;
+    reload)
+        /etc/init.d/$NAME stop
+        if is_running
+        then
+            echo "Unable to stop, will not attempt to start"
+            exit 1
+        fi
+        /etc/init.d/$NAME start
+        ;;
+    restart)
+        /etc/init.d/$NAME stop
+        sleep 1
+        /etc/init.d/$NAME start
+        ;;
+    status)
+        if is_running; then
+            echo "Running"
+        else
+            echo "Stopped"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|reload|restart|status}"
+        exit 1
+        ;;
+esac
+
