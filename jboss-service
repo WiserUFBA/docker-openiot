@@ -193,15 +193,15 @@ status() {
 
 case "$1" in
 	start)
-			start
-			;;
+		start
+		;;
 	stop)
-			stop
-			;;
+		stop
+		;;
 	restart)
-			$0 stop
-			$0 start
-			;;
+		$0 stop
+		$0 start
+		;;
 	status)
 		status
 		;;
