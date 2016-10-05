@@ -1,0 +1,213 @@
+#!/bin/sh
+#
+# Copyright (c) 2016 Jeferson Lima de Almeida <jefersonlimaa@dcc.ufba.br>
+#
+# JBoss standalone control script
+#
+# chkconfig: - 80 20
+# processname: standalone
+# pidfile: /var/run/jboss-as/jboss-as-standalone.pid
+# config: /etc/jboss-as/jboss-as.conf
+#
+# This is free software; you may redistribute it and/or modify
+# it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2,
+# or (at your option) any later version.
+#
+# This is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License with
+# the Debian operating system, in /usr/share/common-licenses/GPL;  if
+# not, write to the Free Software Foundation, Inc., 59 Temple Place,
+# Suite 330, Boston, MA 02111-1307 USA
+#
+### BEGIN INIT INFO
+# Provides:          virtuoso-opensource-7.1
+# Required-Start:    $network $local_fs $remote_fs
+# Required-Stop:     $remote_fs
+# Should-Start:      $named
+# Should-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: JBoss AS 7.1
+# Description:       JBoss AS Standalone
+### END INIT INFO
+
+# Source function library.
+# shellcheck disable=SC1091
+. /lib/lsb/init-functions
+
+# Load Java configuration.
+# shellcheck disable=SC1091
+[ -r /etc/java/java.conf ] && . /etc/java/java.conf
+export JAVA_HOME
+
+# Load JBoss AS init.d configuration.
+if [ -z "$JBOSS_CONF" ]; then
+	JBOSS_CONF="/etc/jboss-as/jboss-as.conf"
+fi
+
+# shellcheck disable=SC1090
+[ -r "$JBOSS_CONF" ] && . "${JBOSS_CONF}"
+
+# Set defaults.
+
+if [ -z "$JBOSS_HOME" ]; then
+	JBOSS_HOME=/usr/share/jboss-as
+fi
+export JBOSS_HOME
+
+if [ -z "$JBOSS_PIDFILE" ]; then
+	JBOSS_PIDFILE=/var/run/jboss-as/jboss-as-standalone.pid
+fi
+export JBOSS_PIDFILE
+
+if [ -z "$JBOSS_CONSOLE_LOG" ]; then
+	JBOSS_CONSOLE_LOG=/var/log/jboss-as/console.log
+fi
+
+if [ -z "$STARTUP_WAIT" ]; then
+	STARTUP_WAIT=30
+fi
+
+if [ -z "$SHUTDOWN_WAIT" ]; then
+	SHUTDOWN_WAIT=30
+fi
+
+if [ -z "$JBOSS_CONFIG" ]; then
+	JBOSS_CONFIG=standalone.xml
+fi
+
+JBOSS_SCRIPT=$JBOSS_HOME/bin/standalone.sh
+
+prog='jboss-as'
+
+CMD_PREFIX=''
+
+JBOSS_USER=jboss
+
+if [ ! -z "$JBOSS_USER" ]; then
+	if [ -x /lib/lsb/init-functions ]; then
+		CMD_PREFIX="start-stop-daemon -user $JBOSS_USER"
+	else
+	# shellcheck disable=SC2034
+		CMD_PREFIX="su - $JBOSS_USER -c"
+	fi
+fi
+
+start() {
+	printf "Starting %s: " "$prog"
+	if [ -f $JBOSS_PIDFILE ]; then
+		read -r ppid < $JBOSS_PIDFILE;
+		# shellcheck disable=SC2009
+		if [ "$(ps --pid "$ppid" 2> /dev/null | grep -c "$ppid" 2> /dev/null)" -eq '1' ]; then
+			printf "%s is already running" "$prog"
+			failure
+			echo
+			return 1 
+		else
+			rm -f $JBOSS_PIDFILE
+		fi
+	fi
+	mkdir -p "$(dirname $JBOSS_CONSOLE_LOG)"
+	cat /dev/null > $JBOSS_CONSOLE_LOG
+
+	mkdir -p "$(dirname $JBOSS_PIDFILE)"
+	chown $JBOSS_USER "$(dirname $JBOSS_PIDFILE)" || true
+	#$CMD_PREFIX JBOSS_PIDFILE=$JBOSS_PIDFILE $JBOSS_SCRIPT 2>&1 > $JBOSS_CONSOLE_LOG &
+	#$CMD_PREFIX JBOSS_PIDFILE=$JBOSS_PIDFILE $JBOSS_SCRIPT &
+
+	if [ ! -z "$JBOSS_USER" ]; then
+		if [ -x /lib/lsb/init-functions ]; then
+			start-stop-daemon -user $JBOSS_USER LAUNCH_JBOSS_IN_BACKGROUND=1 JBOSS_PIDFILE=$JBOSS_PIDFILE $JBOSS_SCRIPT -c $JBOSS_CONFIG > 2>&1 $JBOSS_CONSOLE_LOG &
+		else
+			su - $JBOSS_USER -c "LAUNCH_JBOSS_IN_BACKGROUND=1 JBOSS_PIDFILE=$JBOSS_PIDFILE $JBOSS_SCRIPT -c $JBOSS_CONFIG" > 2>&1 $JBOSS_CONSOLE_LOG &
+		fi
+	fi
+
+	count=0
+	launched=false
+
+	until [ $count -gt $STARTUP_WAIT ]
+	do
+		grep 'JBoss AS.*started in' $JBOSS_CONSOLE_LOG > /dev/null 
+		if [ $? -eq 0 ] ; then
+			# shellcheck disable=SC2034
+			launched=true
+			break
+		fi 
+		sleep 1;
+		count=$((count+1))
+	done
+
+	printf success
+	echo
+	return 0
+}
+
+stop() {
+	printf "Stopping %s: " "$prog"
+	count=0;
+
+	if [ -f $JBOSS_PIDFILE ]; then
+		read -r kpid < $JBOSS_PIDFILE;
+		kwait=$SHUTDOWN_WAIT
+
+		# Try issuing SIGTERM
+
+		kill -15 "$kpid"
+		# shellcheck disable=SC2009
+		until [ "$(ps --pid "$kpid" 2> /dev/null | grep -c "$kpid" 2> /dev/null)" -eq '0' ] || [ $count -gt $kwait ]
+		do
+			sleep 1;
+			count=$((count+1))
+		done
+
+		if [ "$count" -gt $kwait ]; then
+			kill -9 "$kpid"
+		fi
+	fi
+	rm -f $JBOSS_PIDFILE
+	printf success
+	echo
+}
+
+status() {
+	if [ -f $JBOSS_PIDFILE ]; then
+		read -r ppid < $JBOSS_PIDFILE
+		# shellcheck disable=SC2009
+		if [ "$(ps --pid "$ppid" 2> /dev/null | grep -c "$ppid" 2> /dev/null)" -eq '1' ]; then
+			echo "$prog is running (pid $ppid)"
+			return 0
+		else
+			echo "$prog dead but pid file exists"
+			return 1
+		fi
+	fi
+	echo "$prog is not running"
+	return 3
+}
+
+case "$1" in
+	start)
+			start
+			;;
+	stop)
+			stop
+			;;
+	restart)
+			$0 stop
+			$0 start
+			;;
+	status)
+		status
+		;;
+	*)	
+		## If no parameters are given, print which are avaiable.
+		echo "Usage: $0 {start|stop|status|restart|reload}"
+		exit 1
+		;;
+esac
