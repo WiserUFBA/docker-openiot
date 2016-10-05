@@ -28,7 +28,7 @@ ENV JBOSS_HOME /opt/jboss
 ENV OPENIOT_HOME /opt/openiot
 
 # Usuario Administrador Virtuoso
-ENV VIRTUOSO_DBA wiser2014
+ENV VIRTUOSO_DBA_PASS wiser2014
 
 # 2 Passo - Instalação dos pré requisitos comuns
 # ---------------------------------------------------------------------------
@@ -89,7 +89,7 @@ ENV PATH $VIRTUOSO_HOME/bin/:$PATH
 # Adiciona script de inicialização
 ADD virtuoso-service /etc/init.d/virtuoso-service
 
-# Dar as corretas permissões ao projeto
+# Adiciona o script de inicialização do virtuoso
 RUN chmod 755 /etc/init.d/virtuoso-service && \
     chown root:root /etc/init.d/virtuoso-service && \
     update-rc.d virtuoso-service defaults
@@ -102,20 +102,56 @@ RUN useradd virtuoso --home $VIRTUOSO_HOME && \
     chown -R virtuoso $VIRTUOSO_HOME
 
 # Inicializa o serviço do virtuoso e espera 15 segundos para a conclusão
+
 RUN service virtuoso-service start && \
     sleep 15
 
-# Configura o usuario padrão do virtuoso e configuração do OpenIoT
+# Adiciona a rotina padrão de execução
 ADD virtuoso_config.sh /tmp/virtuoso_config.sh
+
+# Executa a configuração do virtuoso e remove o arquivo de configuração
+RUN bash /tmp/virtuoso_config.sh && \
+    rm /tmp/virtuoso_config.sh
+
+# Expõe as portas do Virtuoso
+EXPOSE 8890
+EXPOSE 1111
 
 # 5 Passo - Instalação do JBOSS
 # ---------------------------------------------------------------------------
 # Instalação do JBOSS
 
+# Link de Download JBOSS
+ENV JBOSS_DOWNLOAD_LINK "http://download.jboss.org/jbossas/7.1/jboss-as-7.1.1.Final/jboss-as-7.1.1.Final.zip"
+
+# Instala os pré-requisitos
+RUN apt-get install -y xmlstarlet && \
+    apt-get install -y libsaxon-java libsaxonb-java libsaxonhe-java && \
+    apt-get install -y libaugeas0 && \
+    apt-get install -y unzip bsdtar
+
 # Criar a pasta para o JBOSS
-RUN mkdir /opt/jboss
+RUN mkdir /tmp/jboss_install && \
+    cd /tmp/jboss_install && \
+    wget -O jboss-install.zip $JBOSS_DOWNLOAD_LINK && \
+    unzip jboss-install.zip && \
+    mv jboss-as-7.1.1.Final $JBOSS_HOME && \
+    rm -r /tmp/jboss_install
 
+# Adiciona o script de inicialização do JBOSS
+RUN cp $JBOSS_HOME/bin/init.d/jboss-as-standalone.sh /etc/init.d/jboss-service &&\
+    mkdir /etc/jboss-as && \
+    cp $JBOSS_HOME/bin/init.d/jboss-as.conf /etc/jboss-as/ && \
+    chmod 755 /etc/init.d/jboss-service && \
+    chown root:root /etc/init.d/jboss-service && \
+    update-rc.d jboss-service defaults
 
+# Executa o serviço do virtuoso
+RUN service virtuoso-service start && \
+    sleep 15
+
+# Expõe a porta do JBOSS
+EXPOSE 8080
 
 # 6 Passo - Instalação do OpenIot
 # ---------------------------------------------------------------------------
