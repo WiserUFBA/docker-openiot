@@ -1,20 +1,11 @@
 #!/bin/bash
 
-# Configura os variaveis de cada ambiente
-JAVA_HOME=/usr/lib/jvm/java-7-oracle
-MAVEN_HOME=/usr/share/maven3
-VIRTUOSO_HOME=/usr/local/virtuoso-opensource
-JBOSS_HOME=/opt/jboss
-OPENIOT_HOME=/opt/openiot
+# Script de Inicialização OpenIoT
+# Developed By Jeferson Lima <jefersonlimaa@dcc.ufba.br> @jefersonla
 
-# Permite o uso dessas variaveis dentro das aplicações chamadas
-export JAVA_HOME
-export MAVEN_HOME
-export VIRTUOSO_HOME
-export JBOSS_HOME
-export OPENIOT_HOME
+# Inicializa o Virtuoso e espera alguns segundos por isso
+service virtuoso-service start && sleep 20
 
-# Adiciona o virtuoso ao path
-PATH=$VIRTUOSO_HOME/bin/:$PATH
-
+# Inicializa a instância do Jboss
+service jboss-service start
 

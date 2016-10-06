@@ -163,7 +163,9 @@ EXPOSE 8080
 # Instalação completa do OpenIoT e seus modulos
 
 # Cria a pasta para a aplicação
-RUN mkdir /opt/openiot
+RUN mkdir $OPENIOT_HOME
+
+
 
 # References
 # https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
