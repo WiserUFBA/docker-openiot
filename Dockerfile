@@ -101,7 +101,7 @@ RUN printf "RUN=yes\n" > /etc/default/virtuoso
 RUN useradd virtuoso --home $VIRTUOSO_HOME && \
     chown -R virtuoso:virtuoso $VIRTUOSO_HOME
 
-# Inicializa o serviço do virtuoso e espera
+# Inicializa o serviço do virtuoso, mesmo que ele apresente erros
 RUN until service virtuoso-service start; do
         echo "Failed to start... Trying again."
     done
@@ -144,12 +144,12 @@ RUN mkdir /tmp/jboss_install && \
 ADD jboss-service /etc/init.d/jboss-service
 ADD jboss-as.conf /etc/jboss-as/jboss-as.conf
 
-# Cria os arquivos de configuração para o JBOSS
+# Adiciona o Jboss a inicialização
 RUN chmod 755 /etc/init.d/jboss-service && \
     chown root:root /etc/init.d/jboss-service && \
     update-rc.d jboss-service defaults
 
-# Cria o usuario virtuoso e adiciona as permissões para a DB
+# Cria o usuario jboss e adiciona as permissões para a home do jboss
 RUN useradd jboss --home $JBOSS_HOME && \
     chown -R jboss:jboss $JBOSS_HOME
 
@@ -174,8 +174,14 @@ RUN mkdir $OPENIOT_HOME
 # Script de inicialização da aplicação
 ADD openiot.sh /openiot.sh
 
+# Remove diversas aplicações inúteis
+# TODO: REMOVE ALL UNANTHED APPLICATIONS
+
+# Finaliza a instalação
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 # Ponto de entrada
-CMD ["/openiot.sh"]
+CMD ["/bin/bash", "/openiot.sh"]
 
 # References
 # https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
@@ -183,6 +189,14 @@ CMD ["/openiot.sh"]
 # https://hub.docker.com/_/ubuntu/
 # https://github.com/jboss-dockerfiles/base-jdk/blob/jdk7/Dockerfile
 # https://hub.docker.com/r/jboss/base/
-# https://hub.docker.com/r/jboss/base/~/dockerfile/
 # https://hub.docker.com/r/tenforce/virtuoso/~/dockerfile/
+# http://stackoverflow.com/questions/19335444/how-to-assign-a-port-mapping-to-an-existing-docker-container
+# http://stackoverflow.com/questions/6880902/start-jboss-7-as-a-service-on-linux
+# http://stackoverflow.com/questions/15630055/how-to-install-maven-3-on-ubuntu-15-10-15-04-14-10-14-04-lts-13-10-13-04-12-10-1
+# https://www.ivankrizsan.se/2015/08/08/creating-a-docker-image-with-ubuntu-and-java/
+# https://www.ctl.io/developers/blog/post/dockerfile-entrypoint-vs-cmd/
+# https://hub.docker.com/r/andreptb/jboss-as/~/dockerfile/
+# https://hub.docker.com/r/jboss/base/~/dockerfile/
+# http://www.mundodocker.com.br/docker-exec/
+# https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
 
