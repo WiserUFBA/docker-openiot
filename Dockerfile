@@ -30,6 +30,15 @@ ENV OPENIOT_HOME /opt/openiot
 # Usuario Administrador Virtuoso
 ENV VIRTUOSO_DBA_PASS wiser2014
 
+# Geração de chave auto assinada para o JBOSS
+ENV JBOSS_SSL_KEY "wiser2014"
+ENV JBOSS_SSL_ADDRESS "localhost"
+ENV JBOSS_SSL_ORGANIZATION "WiserUFBA"
+ENV JBOSS_SSL_ORGANIZATION_UNITY "SmartUFBA"
+ENV JBOSS_SSL_CITY "Salvador"
+ENV JBOSS_SSL_STATE "Bahia"
+ENV JBOSS_SSL_COUNTRY "BR"
+
 # 2 Passo - Instalação dos pré requisitos comuns
 # ---------------------------------------------------------------------------
 # Instalar os prerequisitos globais como alguns ppa e o básico para instalação
@@ -168,6 +177,32 @@ EXPOSE 8443
 RUN mkdir $OPENIOT_HOME
 
 # Configuração do Jboss
+RUN mkdir $JBOSS_HOME/standalone/configuration/ssl && \
+    JBOSS_SSL_CONFIG="CN=$JBOSS_SSL_ADDRESS," && \
+	JBOSS_SSL_CONFIG="$JBOSS_SSL_CONFIG OU=$JBOSS_SSL_ORGANIZATION_UNITY," && \
+	JBOSS_SSL_CONFIG="$JBOSS_SSL_CONFIG O=$JBOSS_SSL_ORGANIZATION," && \
+	JBOSS_SSL_CONFIG="$JBOSS_SSL_CONFIG L=$JBOSS_SSL_CITY," && \
+	JBOSS_SSL_CONFIG="$JBOSS_SSL_CONFIG S=$JBOSS_SSL_STATE," && \
+	JBOSS_SSL_CONFIG="$JBOSS_SSL_CONFIG C=$JBOSS_SSL_COUNTRY" && \
+	export JBOSS_SSL_CONFIG && \
+	cd $JBOSS_HOME/standalone/configuration/ssl && \
+	keytool -genkey -noprompt \
+			-alias jbosskey \
+			-dname $JBOSS_SSL_CONFIG \
+			-keyalg RSA \
+			-keystore server.keystore \
+			-keypass $JBOSS_SSL_KEY && \
+	keytool -export \
+			-alias jbosskey \
+			-keypass $JBOSS_SSL_KEY \
+			-file server.crt \
+			-keystore server.keystore && \
+	keytool -import \
+			-alias jbosscert \
+			-keypass $JBOSS_SSL_KEY \
+			-file server.crt \
+            -keystore server.keystore && \
+
 
 # Passo Final
 # ---------------------------------------------------------------------------
@@ -202,3 +237,4 @@ CMD ["/bin/bash", "/openiot.sh"]
 # https://www.ctl.io/developers/blog/post/dockerfile-entrypoint-vs-cmd/
 # http://www.mundodocker.com.br/docker-exec/
 # https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
+# http://stackoverflow.com/questions/13578134/how-to-automate-keystore-generation-using-the-java-keystore-tool-w-o-user-inter

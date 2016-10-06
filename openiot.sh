@@ -9,7 +9,7 @@ until service virtuoso-service start; do
 done
 
 # Espera alguns segundos pela inicialização do virtuoso
-sleep 15
+sleep 5
 
 # Inicializa a instância do Jboss
 service jboss-service start
