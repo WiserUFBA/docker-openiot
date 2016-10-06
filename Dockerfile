@@ -167,6 +167,8 @@ EXPOSE 8443
 # Cria a pasta para a aplicação
 RUN mkdir $OPENIOT_HOME
 
+# Configuração do Jboss
+
 # Passo Final
 # ---------------------------------------------------------------------------
 # Ultimas rotinas de compilação da imagem
@@ -184,19 +186,19 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 CMD ["/bin/bash", "/openiot.sh"]
 
 # References
-# https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
-# https://github.com/OpenIotOrg/openiot/wiki/Installation-Guide
-# https://hub.docker.com/_/ubuntu/
+# https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
 # https://github.com/jboss-dockerfiles/base-jdk/blob/jdk7/Dockerfile
+# https://github.com/OpenIotOrg/openiot/wiki/Installation-Guide
+# https://github.com/OpenIotOrg/openiot/wiki/InstallingVirtuosoOpensource7Ubuntu
+# https://hub.docker.com/_/ubuntu/
 # https://hub.docker.com/r/jboss/base/
+# https://hub.docker.com/r/jboss/base/~/dockerfile/
 # https://hub.docker.com/r/tenforce/virtuoso/~/dockerfile/
+# https://hub.docker.com/r/andreptb/jboss-as/~/dockerfile/
 # http://stackoverflow.com/questions/19335444/how-to-assign-a-port-mapping-to-an-existing-docker-container
 # http://stackoverflow.com/questions/6880902/start-jboss-7-as-a-service-on-linux
 # http://stackoverflow.com/questions/15630055/how-to-install-maven-3-on-ubuntu-15-10-15-04-14-10-14-04-lts-13-10-13-04-12-10-1
 # https://www.ivankrizsan.se/2015/08/08/creating-a-docker-image-with-ubuntu-and-java/
 # https://www.ctl.io/developers/blog/post/dockerfile-entrypoint-vs-cmd/
-# https://hub.docker.com/r/andreptb/jboss-as/~/dockerfile/
-# https://hub.docker.com/r/jboss/base/~/dockerfile/
 # http://www.mundodocker.com.br/docker-exec/
-# https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
-
+# https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
