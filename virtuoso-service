@@ -214,10 +214,12 @@ case "$1" in
             else
                 # It is not running after we did start
                 log_end_msg 1
+                exit 1
             fi
         else
             # Either we could not start it
             log_end_msg 1
+            exit 1
         fi
         ;;
   stop)

@@ -101,9 +101,10 @@ RUN printf "RUN=yes\n" > /etc/default/virtuoso
 RUN useradd virtuoso --home $VIRTUOSO_HOME && \
     chown -R virtuoso:virtuoso $VIRTUOSO_HOME
 
-# Inicializa o serviço do virtuoso e espera 15 segundos para a conclusão
-RUN service virtuoso-service start && \
-    sleep 15
+# Inicializa o serviço do virtuoso e espera
+RUN until service virtuoso-service start; do
+        echo "Failed to start... Trying again."
+    done
 
 # Adiciona a rotina padrão de execução
 ADD virtuoso_config.sh /tmp/virtuoso_config.sh
@@ -157,6 +158,7 @@ RUN service jboss-service start
 
 # Expõe a porta do JBOSS
 EXPOSE 8080
+EXPOSE 8443
 
 # 6 Passo - Instalação do OpenIot
 # ---------------------------------------------------------------------------
@@ -165,7 +167,15 @@ EXPOSE 8080
 # Cria a pasta para a aplicação
 RUN mkdir $OPENIOT_HOME
 
+# Passo Final
+# ---------------------------------------------------------------------------
+# Ultimas rotinas de compilação da imagem
 
+# Script de inicialização da aplicação
+ADD openiot.sh /openiot.sh
+
+# Ponto de entrada
+CMD ["/openiot.sh"]
 
 # References
 # https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
