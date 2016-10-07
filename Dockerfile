@@ -267,6 +267,23 @@ RUN mkdir /tmp/openiot && \
     cd /tmp/openiot && \
     git clone --branch $OPENIOT_BRANCH $OPENIOT_LINK && \
     cd /tmp/openiot/openiot && \
+    xmlstarlet ed \
+			-L \
+			-N pomns="http://maven.apache.org/POM/4.0.0" \
+			--subnode "/pomns:project" \
+				--type elem \
+				-n repositories \
+			--subnode "/pomns:project/repositories" \
+				--type elem \
+				-n repository \
+			--subnode "//repositories/repository" \
+				--type elem \
+				-n id \
+				-v "wiser-releases" \
+			--subnode "//repository" \
+				--type elem \
+				-n url \
+				-v "https://github.com/WiserUFBA/wiser-mvn-repo/raw/master/releases" ./pom.xml && \
     mvn clean install && \
     JBOSS_DEPLOY="$JBOSS_HOME/standalone/deployments" && \
 	JBOSS_CONFIGURATION="$JBOSS_HOME/standalone/configuration" && \
