@@ -9,12 +9,12 @@
 #   totalmente configurado. O objetivo deste container é o de
 #   se tornar o modelo padrão de deploy da aplicação OpenIoT
 # ---------------------------------------------------------------------------
+FROM ubuntu:14.04
 MAINTAINER Jeferson Lima <jefersonlimaa@dcc.ufba.br>
 
 # 1 Passo - Preparação do ambiente
 # ---------------------------------------------------------------------------
 # Para nossa primeira execução iremos utilizar a versão 14.04 do ubuntu
-FROM ubuntu:14.04
 
 # Como em 'https://github.com/OpenIotOrg/openiot/wiki/Installation-Guide'
 # precisamos configurar algumas variavéis de ambiente para a correta
@@ -75,6 +75,7 @@ RUN apt-get install -y build-essential debhelper autotools-dev && \
     pip install crudini
 
 # Virtuoso Release Link Virtuoso 7.2.4.2 (25/04/2016)
+ENV VIRTUOSO_VERSION "7.2.4.2"
 ENV VIRTUOSO_RELEASE_LINK "https://github.com/openlink/virtuoso-opensource/releases/download/v7.2.4.2/virtuoso-opensource-7.2.4.2.tar.gz"
 
 # Configuração compilação e instalação do Virtuoso
@@ -83,7 +84,7 @@ RUN cd /tmp && \
     cd virtuoso_install && \
     wget -O virtuoso_release.tar.gz $VIRTUOSO_RELEASE_LINK && \
     tar -zxvf virtuoso_release.tar.gz && \
-    cd virtuoso_opensource && \
+    cd virtuoso-opensource-$VIRTUOSO_VERSION && \
     ./autogen.sh && \
     CFLAGS="-O2 -m64" && \
     export CFLAGS && \
@@ -105,12 +106,10 @@ RUN chmod 755 /etc/init.d/virtuoso-service && \
     printf "RUN=yes\n" > /etc/default/virtuoso && \
     # Cria o usuario virtuoso e adiciona as permissões para a DB
     useradd virtuoso --home $VIRTUOSO_HOME && \
-    chown -R virtuoso:virtuoso $VIRTUOSO_HOME && \
+    chown -R virtuoso:virtuoso $VIRTUOSO_HOME
 
 # Inicializa o serviço do virtuoso, mesmo que ele apresente erros
-RUN until service virtuoso-service start; do
-        echo "Failed to start... Trying again."
-    done
+RUN until service virtuoso-service start; do echo "Failed to start... Trying again."; done
 
 # Adiciona a rotina padrão de execução
 ADD virtuoso_config.sh /tmp/virtuoso_config.sh
