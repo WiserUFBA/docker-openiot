@@ -284,22 +284,30 @@ RUN mkdir /tmp/openiot && \
 				--type elem \
 				-n url \
 				-v "https://github.com/WiserUFBA/wiser-mvn-repo/raw/master/releases" ./pom.xml && \
-    mvn clean install && \
-    JBOSS_DEPLOY="$JBOSS_HOME/standalone/deployments" && \
+    mvn -X clean install && \
 	JBOSS_CONFIGURATION="$JBOSS_HOME/standalone/configuration" && \
 	cp ./utils/utils.commons/src/main/resources/security-config.ini "$JBOSS_CONFIGURATION" && \
 	cp ./utils/utils.commons/src/main/resources/properties/openiot.properties "$JBOSS_CONFIGURATION" && \
-	cp ./modules/lsm-light/lsm-light.server/target/lsm-light.server.war "$JBOSS_DEPLOY" && \
-	cp ./modules/security/security-server/target/openiot-cas.war "$JBOSS_DEPLOY" && \
-	cp ./modules/security/security-management/target/security.management.war "$JBOSS_DEPLOY" && \
-	cp ./modules/scheduler/scheduler.core/target/scheduler.core.war "$JBOSS_DEPLOY" && \
-	cp ./modules/sdum/sdum.core/target/sdum.core.war "$JBOSS_DEPLOY" && \
-	cp ./ui/ui.requestDefinition/target/ui.requestDefinition.war "$JBOSS_DEPLOY" && \
-	cp ./ui/ui.requestPresentation/target/ui.requestPresentation.war "$JBOSS_DEPLOY" && \
-	cp ./ui/ui.schemaeditor/target/ui.schemaeditor.war "$JBOSS_DEPLOY" && \
-	cp ./ui/ide/ide.core/target/ide.core.war "$JBOSS_DEPLOY" && \
     cd / && \
     mv /tmp/openiot/openiot $OPENIOT_HOME && \
+	cd $OPENIOT_HOME/modules/lsm-light/lsm-light.server/ && \
+	mvn -X jboss-as:deploy && \
+	cd $OPENIOT_HOME/modules/security/security-server/ && \
+	mvn -X jboss-as:deploy && \
+	cd $OPENIOT_HOME/modules/security/security-management/ && \
+	mvn -X jboss-as:deploy && \
+	cd $OPENIOT_HOME/modules/scheduler/scheduler.core/ && \
+	mvn -X jboss-as:deploy && \
+	cd $OPENIOT_HOME/modules/sdum/sdum.core/ && \
+	mvn -X jboss-as:deploy && \
+	cd $OPENIOT_HOME/ui/ui.requestDefinition/ && \
+	mvn -X jboss-as:deploy && \
+	cd $OPENIOT_HOME/ui/ui.requestPresentation/ && \
+	mvn -X jboss-as:deploy && \
+	cd $OPENIOT_HOME/ui/ui.schemaeditor/ && \
+	mvn -X jboss-as:deploy && \
+	cd $OPENIOT_HOME/ui/ide/ide.core/ && \
+	mvn -X jboss-as:deploy && \
     rm -r /tmp/openiot
 
 # Passo Final
