@@ -101,14 +101,11 @@ ADD virtuoso-service /etc/init.d/virtuoso-service
 # Adiciona o script de inicialização do virtuoso
 RUN chmod 755 /etc/init.d/virtuoso-service && \
     chown root:root /etc/init.d/virtuoso-service && \
-    update-rc.d virtuoso-service defaults
-
-# Adiciona a permissão de inicialização
-RUN printf "RUN=yes\n" > /etc/default/virtuoso
-
-# Cria o usuario virtuoso e adiciona as permissões para a DB
-RUN useradd virtuoso --home $VIRTUOSO_HOME && \
-    chown -R virtuoso:virtuoso $VIRTUOSO_HOME
+    update-rc.d virtuoso-service defaults && \
+    printf "RUN=yes\n" > /etc/default/virtuoso && \
+    # Cria o usuario virtuoso e adiciona as permissões para a DB
+    useradd virtuoso --home $VIRTUOSO_HOME && \
+    chown -R virtuoso:virtuoso $VIRTUOSO_HOME && \
 
 # Inicializa o serviço do virtuoso, mesmo que ele apresente erros
 RUN until service virtuoso-service start; do
@@ -137,10 +134,9 @@ ENV JBOSS_DOWNLOAD_LINK "http://download.jboss.org/jbossas/7.1/jboss-as-7.1.1.Fi
 RUN apt-get install -y xmlstarlet && \
     apt-get install -y libsaxon-java libsaxonb-java libsaxonhe-java && \
     apt-get install -y libaugeas0 && \
-    apt-get install -y unzip bsdtar
-
-# Criar a pasta para o JBOSS
-RUN mkdir /tmp/jboss_install && \
+    apt-get install -y unzip bsdtar \
+    # Instala o JBOSS
+    mkdir /tmp/jboss_install && \
     cd /tmp/jboss_install && \
     wget -O jboss-install.zip $JBOSS_DOWNLOAD_LINK && \
     unzip jboss-install.zip && \
@@ -173,9 +169,6 @@ EXPOSE 8443
 # ---------------------------------------------------------------------------
 # Instalação completa do OpenIoT e seus modulos
 
-# Cria a pasta para a aplicação
-RUN mkdir $OPENIOT_HOME
-
 # Configuração do Jboss
 RUN mkdir $JBOSS_HOME/standalone/configuration/ssl && \
     JBOSS_SSL_CONFIG="CN=$JBOSS_SSL_ADDRESS," && \
@@ -186,23 +179,111 @@ RUN mkdir $JBOSS_HOME/standalone/configuration/ssl && \
 	JBOSS_SSL_CONFIG="$JBOSS_SSL_CONFIG C=$JBOSS_SSL_COUNTRY" && \
 	export JBOSS_SSL_CONFIG && \
 	cd $JBOSS_HOME/standalone/configuration/ssl && \
-	keytool -genkey -noprompt \
+	keytool -genkey \
+			-noprompt \
 			-alias jbosskey \
-			-dname $JBOSS_SSL_CONFIG \
+			-dname "$JBOSS_SSL_CONFIG" \
 			-keyalg RSA \
 			-keystore server.keystore \
-			-keypass $JBOSS_SSL_KEY && \
+			-storepass changeit \
+			-keypass "$JBOSS_SSL_KEY" && \
 	keytool -export \
+			-noprompt \
 			-alias jbosskey \
-			-keypass $JBOSS_SSL_KEY \
+			-keypass "$JBOSS_SSL_KEY" \
 			-file server.crt \
+			-storepass changeit \
 			-keystore server.keystore && \
 	keytool -import \
+			-noprompt \
 			-alias jbosscert \
-			-keypass $JBOSS_SSL_KEY \
+			-keypass "$JBOSS_SSL_KEY" \
 			-file server.crt \
+			-storepass changeit \
             -keystore server.keystore && \
+	keytool -import \
+			-noprompt \
+			-keystore "$JAVA_HOME/jre/lib/security/cacerts" \
+			-file server.crt \
+			-alias incommon \
+			-storepass changeit && \
+	xmlstarlet ed \
+			-L \
+			-N serverns="urn:jboss:domain:1.2" \
+			-N subsystemns="urn:jboss:domain:web:1.1" \
+			--subnode "/serverns:server/_:profile/subsystemns:subsystem" \
+				--type elem \
+				-n connector \
+			--insert "//subsystemns:subsystem/connector[not(@name)]" \
+				--type attr \
+				-n name \
+				-v "https" \
+			--insert "//connector[@name='https']" \
+				--type attr \
+				-n protocol \
+				-v "HTTP/1.1" \
+			--insert "//connector[@name='https']" \
+				--type attr \
+				-n scheme \
+				-v "https" \
+			--insert "//connector[@name='https']" \
+				--type attr \
+				-n "socket-binding" \
+				-v "https" \
+			--insert "//connector[@name='https']" \
+				--type attr \
+				-n "secure" \
+				-v "true" \
+			--subnode "//connector[@name='https']" \
+				--type elem \
+				-n ssl \
+			--insert "//connector[@name='https']/ssl" \
+				--type attr \
+				-n name \
+				-v "https" \
+			--insert "//ssl" \
+				--type attr \
+				-n "key-alias" \
+				-v "jbosskey" \
+			--insert "//ssl" \
+				--type attr \
+				-n "password" \
+				-v "$JBOSS_SSL_KEY" \
+			--insert "//ssl" \
+				--type attr \
+				-n "certificate-key-file" \
+				-v "$JBOSS_HOME/standalone/configuration/ssl/server.keystore" \
+			"$JBOSS_HOME/standalone/configuration/standalone.xml"
 
+# OpenIoT Installation Link
+ENV OPENIOT_LINK https://github.com/OpenIotOrg/openiot.git
+
+# Versão do OpenIoT
+ENV OPENIOT_BRANCH develop
+# ENV OPENIOT_BRANCH master
+
+# Compilação dos modulos do OpenIoT
+RUN mkdir /tmp/openiot && \
+    cd /tmp/openiot && \
+    git clone --branch $OPENIOT_BRANCH $OPENIOT_LINK && \
+    cd /tmp/openiot/openiot && \
+    mvn clean install && \
+    JBOSS_DEPLOY="$JBOSS_HOME/standalone/deployments" && \
+	JBOSS_CONFIGURATION="$JBOSS_HOME/standalone/configuration" && \
+	cp ./utils/utils.commons/src/main/resources/security-config.ini "$JBOSS_CONFIGURATION" && \
+	cp ./utils/utils.commons/src/main/resources/properties/openiot.properties "$JBOSS_CONFIGURATION" && \
+	cp ./modules/lsm-light/lsm-light.server/target/lsm-light.server.war "$JBOSS_DEPLOY" && \
+	cp ./modules/security/security-server/target/openiot-cas.war "$JBOSS_DEPLOY" && \
+	cp ./modules/security/security-management/target/security.management.war "$JBOSS_DEPLOY" && \
+	cp ./modules/scheduler/scheduler.core/target/scheduler.core.war "$JBOSS_DEPLOY" && \
+	cp ./modules/sdum/sdum.core/target/sdum.core.war "$JBOSS_DEPLOY" && \
+	cp ./ui/ui.requestDefinition/target/ui.requestDefinition.war "$JBOSS_DEPLOY" && \
+	cp ./ui/ui.requestPresentation/target/ui.requestPresentation.war "$JBOSS_DEPLOY" && \
+	cp ./ui/ui.schemaeditor/target/ui.schemaeditor.war "$JBOSS_DEPLOY" && \
+	cp ./ui/ide/ide.core/target/ide.core.war "$JBOSS_DEPLOY" && \
+    cd / && \
+    mv /tmp/openiot/openiot $OPENIOT_HOME && \
+    rm -r /tmp/openiot
 
 # Passo Final
 # ---------------------------------------------------------------------------
@@ -238,3 +319,4 @@ CMD ["/bin/bash", "/openiot.sh"]
 # http://www.mundodocker.com.br/docker-exec/
 # https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
 # http://stackoverflow.com/questions/13578134/how-to-automate-keystore-generation-using-the-java-keystore-tool-w-o-user-inter
+# https://www.technomancy.org/xml/add-a-subnode-command-line-xmlstarlet/
