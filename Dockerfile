@@ -148,7 +148,7 @@ RUN apt-get install -y xmlstarlet && \
 # Adiciona o script de inicialização do JBOSS e a configuração
 ADD jboss-service /etc/init.d/jboss-service
 ADD jboss-as.conf /etc/jboss-as/jboss-as.conf
-ADD openiot.menu.tar.gz /tmp/openiot.menu.tar.gz
+ADD welcome-content.tar.gz /tmp/
 
 # Adiciona o Jboss a inicialização
 # Cria o usuario jboss e adiciona as permissões para a home do jboss
@@ -159,7 +159,7 @@ RUN chmod 755 /etc/init.d/jboss-service && \
     useradd jboss --home $JBOSS_HOME && \
     chown -R jboss:jboss $JBOSS_HOME && \
     rm -r $JBOSS_HOME/welcome-content && \
-    tar --directory "$JBOSS_HOME" -zxvf /tmp/openiot.menu.tar.gz
+    mv /tmp/welcome-content "$JBOSS_HOME/welcome-content"
 
 # Expõe a porta do JBOSS
 EXPOSE 8080
