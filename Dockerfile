@@ -150,16 +150,13 @@ ADD jboss-service /etc/init.d/jboss-service
 ADD jboss-as.conf /etc/jboss-as/jboss-as.conf
 
 # Adiciona o Jboss a inicialização
+# Cria o usuario jboss e adiciona as permissões para a home do jboss
+# Executa o serviço do jboss
 RUN chmod 755 /etc/init.d/jboss-service && \
     chown root:root /etc/init.d/jboss-service && \
-    update-rc.d jboss-service defaults
-
-# Cria o usuario jboss e adiciona as permissões para a home do jboss
-RUN useradd jboss --home $JBOSS_HOME && \
+    update-rc.d jboss-service defaults && \
+    useradd jboss --home $JBOSS_HOME && \
     chown -R jboss:jboss $JBOSS_HOME
-
-# Executa o serviço do jboss
-RUN service jboss-service start
 
 # Expõe a porta do JBOSS
 EXPOSE 8080
@@ -285,9 +282,27 @@ RUN mkdir /tmp/openiot && \
                 -n url \
                 -v "https://github.com/WiserUFBA/wiser-mvn-repo/raw/master/releases" ./pom.xml && \
     mvn -X clean install && \
+    service jboss-service start && \
+    service jboss-service start && \
     JBOSS_CONFIGURATION="$JBOSS_HOME/standalone/configuration" && \
     cp ./utils/utils.commons/src/main/resources/security-config.ini "$JBOSS_CONFIGURATION" && \
     cp ./utils/utils.commons/src/main/resources/properties/openiot.properties "$JBOSS_CONFIGURATION" && \
+    sed --in-place \
+	    -e "s/scheduler\.core\.lsm\.openiotMetaGraph=.*$/scheduler\.core\.lsm\.openiotMetaGraph=http\:\/\/openiot\.eu\/OpenIoT\/sensormeta\#/g" \
+	    -e "s/scheduler\.core\.lsm\.openiotDataGraph=.*$/scheduler\.core\.lsm\.openiotDataGraph=http\:\/\/openiot\.eu\/OpenIoT\/sensordata#/g" \
+	    -e "s/scheduler\.core\.lsm\.openiotFunctionalGraph=.*$/scheduler\.core\.lsm\.openiotFunctionalGraph=http\:\/\/openiot.eu\/OpenIoT\/functionaldata#/g" \
+	    -e "s/scheduler\.core\.lsm\.sparql\.endpoint=.*/scheduler\.core\.lsm\.sparql\.endpoint=http\:\/\/localhost\:8890\/sparql/g" \
+	    -e "s/scheduler\.core\.lsm\.remote\.server=.*$/scheduler\.core\.lsm\.remote\.server=http\:\/\/localhost\:8080\/lsm-light\.server\//g" \
+	    -e "s/sdum\.core\.lsm\.openiotFunctionalGraph=.*$/sdum\.core\.lsm\.openiotFunctionalGraph=http\:\/\/openiot\.eu\/OpenIoT\/functionaldata#/g" \
+	    -e "s/sdum\.core\.lsm\.sparql\.endpoint=.*$/sdum\.core\.lsm\.sparql\.endpoint=http\:\/\/localhost\:8890\/sparql/g" \
+	    -e "s/sdum\.core\.lsm\.remote\.server=.*$/sdum\.core\.lsm\.remote\.server=http\:\/\/localhost\:8080\/lsm-light.server\//g" \
+	    -e "s/lsm-light\.server\.connection\.url=.*$/lsm-light\.server\.connection\.url=jdbc\:virtuoso\:\/\/localhost\:1111\/log_enable=2/g" \
+	    -e "s/lsm-light\.server\.connection\.username=.*$/lsm-light\.server\.connection\.username=dba/g" \
+	    -e "s/lsm-light\.server\.connection\.password=.*$/lsm-light\.server\.connection\.password=$VIRTUOSO_DBA_PASS/g" \
+	    -e "s/lsm-light\.server\.localMetaGraph.*$/lsm-light\.server\.localMetaGraph\ =\ http\:\/\/openiot.eu\/OpenIoT\/sensormeta#/g" \
+	    -e "s/lsm-light\.server\.localDataGraph.*$/lsm-light\.server\.localDataGraph\ =\ http\:\/\/openiot.eu\/OpenIoT\/sensordata#/g" \
+	    -e "s/lsm\.deri\.ie/localhost\:8080/g" \
+		$JBOSS_HOME/standalone/configuration/openiot.properties && \
     cd / && \
     mv /tmp/openiot/openiot $OPENIOT_HOME && \
     cd $OPENIOT_HOME/modules/lsm-light/lsm-light.server/ && \
@@ -331,6 +346,8 @@ CMD ["/bin/bash", "/openiot.sh"]
 # https://github.com/jboss-dockerfiles/base-jdk/blob/jdk7/Dockerfile
 # https://github.com/OpenIotOrg/openiot/wiki/Installation-Guide
 # https://github.com/OpenIotOrg/openiot/wiki/InstallingVirtuosoOpensource7Ubuntu
+# https://github.com/OpenIotOrg/openiot/wiki/OpenIoT-Virtual-Box-Image---Documentation
+# https://github.com/OpenIotOrg/openiot/issues/116
 # https://hub.docker.com/_/ubuntu/
 # https://hub.docker.com/r/jboss/base/
 # https://hub.docker.com/r/jboss/base/~/dockerfile/
@@ -345,3 +362,4 @@ CMD ["/bin/bash", "/openiot.sh"]
 # https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
 # http://stackoverflow.com/questions/13578134/how-to-automate-keystore-generation-using-the-java-keystore-tool-w-o-user-inter
 # https://www.technomancy.org/xml/add-a-subnode-command-line-xmlstarlet/
+# http://www.thegeekstuff.com/2009/10/unix-sed-tutorial-how-to-execute-multiple-sed-commands
