@@ -159,7 +159,7 @@ RUN chmod 755 /etc/init.d/jboss-service && \
     useradd jboss --home $JBOSS_HOME && \
     chown -R jboss:jboss $JBOSS_HOME && \
     rm -r $JBOSS_HOME/welcome-content && \
-    tar -zxvf /tmp/openiot.menu.tar.gz --directory "$JBOSS_HOME"
+    tar --directory "$JBOSS_HOME" -zxvf /tmp/openiot.menu.tar.gz
 
 # Expõe a porta do JBOSS
 EXPOSE 8080
