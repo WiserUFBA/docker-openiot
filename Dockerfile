@@ -310,7 +310,10 @@ RUN mkdir /tmp/openiot && \
 	    -e "s/lsm\.deri\.ie/localhost\:8080/g" \
 		"$JBOSS_CONFIGURATION/openiot.properties" && \
     cd / && \
-    mv /tmp/openiot/openiot $OPENIOT_HOME && \
+    mv /tmp/openiot/openiot $OPENIOT_HOME
+
+# Instalação dos Módulos do OpenIoT no Container JBoss
+RUN until service jboss-service status ; do service jboss-service start; echo "Started..."; done && \
     cd $OPENIOT_HOME/modules/lsm-light/lsm-light.server/ && \
     mvn -X jboss-as:deploy && \
     cd $OPENIOT_HOME/modules/security/security-server/ && \
