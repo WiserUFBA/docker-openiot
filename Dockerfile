@@ -284,7 +284,7 @@ RUN mkdir /tmp/openiot && \
                 --type elem \
                 -n url \
                 -v "https://github.com/WiserUFBA/wiser-mvn-repo/raw/master/releases" ./pom.xml && \
-    MAVEN_OPTS="-Xms256m -Xmx1024m -Xss1024k" && \
+    export MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" && \
     mvn -X clean install && \
     ( service jboss-service start || \
       service jboss-service start || \
