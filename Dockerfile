@@ -148,15 +148,19 @@ RUN apt-get install -y xmlstarlet && \
 # Adiciona o script de inicialização do JBOSS e a configuração
 ADD jboss-service /etc/init.d/jboss-service
 ADD jboss-as.conf /etc/jboss-as/jboss-as.conf
+ADD welcome.tar.gz /tmp
 
 # Adiciona o Jboss a inicialização
 # Cria o usuario jboss e adiciona as permissões para a home do jboss
-# Executa o serviço do jboss
+# Remove a tela antiga do JBoss
 RUN chmod 755 /etc/init.d/jboss-service && \
     chown root:root /etc/init.d/jboss-service && \
     update-rc.d jboss-service defaults && \
     useradd jboss --home $JBOSS_HOME && \
-    chown -R jboss:jboss $JBOSS_HOME
+    chown -R jboss:jboss $JBOSS_HOME && \
+    rm -r $JBOSS_HOME/welcome-content && \
+    tar -zxvf /tmp/welcome.tar.gz && \
+    mv /tmp/welcome-content $JBOSS_HOME/welcome-content
 
 # Expõe a porta do JBOSS
 EXPOSE 8080
