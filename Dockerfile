@@ -302,7 +302,7 @@ RUN mkdir /tmp/openiot && \
 	    -e "s/lsm-light\.server\.localMetaGraph.*$/lsm-light\.server\.localMetaGraph\ =\ http\:\/\/openiot.eu\/OpenIoT\/sensormeta#/g" \
 	    -e "s/lsm-light\.server\.localDataGraph.*$/lsm-light\.server\.localDataGraph\ =\ http\:\/\/openiot.eu\/OpenIoT\/sensordata#/g" \
 	    -e "s/lsm\.deri\.ie/localhost\:8080/g" \
-		$JBOSS_HOME/standalone/configuration/openiot.properties && \
+		"$JBOSS_CONFIGURATION/openiot.properties" && \
     cd / && \
     mv /tmp/openiot/openiot $OPENIOT_HOME && \
     cd $OPENIOT_HOME/modules/lsm-light/lsm-light.server/ && \
@@ -316,13 +316,13 @@ RUN mkdir /tmp/openiot && \
     cd $OPENIOT_HOME/modules/sdum/sdum.core/ && \
     mvn -X jboss-as:deploy && \
     cd $OPENIOT_HOME/ui/ui.requestDefinition/ && \
-    mvn -X jboss-as:deploy && \
+    mvn -X mvn clean package jboss-as:deploy && \
     cd $OPENIOT_HOME/ui/ui.requestPresentation/ && \
-    mvn -X jboss-as:deploy && \
+    mvn -X mvn clean package jboss-as:deploy && \
     cd $OPENIOT_HOME/ui/ui.schemaeditor/ && \
-    mvn -X jboss-as:deploy && \
+    mvn -X mvn clean package jboss-as:deploy && \
     cd $OPENIOT_HOME/ui/ide/ide.core/ && \
-    mvn -X jboss-as:deploy && \
+    mvn -X mvn clean package jboss-as:deploy && \
     rm -r /tmp/openiot
 
 # Passo Final
