@@ -100,23 +100,23 @@ ENV PATH $VIRTUOSO_HOME/bin/:$PATH
 ADD virtuoso-service /etc/init.d/virtuoso-service
 
 # Adiciona o script de inicialização do virtuoso
+# Cria o usuario virtuoso e adiciona as permissões para a DB
 RUN chmod 755 /etc/init.d/virtuoso-service && \
     chown root:root /etc/init.d/virtuoso-service && \
     update-rc.d virtuoso-service defaults && \
     printf "RUN=yes\n" > /etc/default/virtuoso && \
-    # Cria o usuario virtuoso e adiciona as permissões para a DB
     useradd virtuoso --home $VIRTUOSO_HOME && \
-    chown -R virtuoso:virtuoso $VIRTUOSO_HOME && \
-    mkdir /usr/local/virtuoso-opensource/var/lib/virtuoso/db
-
-# Inicializa o serviço do virtuoso, mesmo que ele apresente erros
-RUN until service virtuoso-service start; do echo "Failed to start... Trying again."; done
+    chown -R virtuoso:virtuoso $VIRTUOSO_HOME
 
 # Adiciona a rotina padrão de execução
 ADD virtuoso_config.sh /tmp/virtuoso_config.sh
 
+# Inicializa o serviço do virtuoso, mesmo que ele apresente erros
 # Executa a configuração do virtuoso e remove o arquivo de configuração
-RUN bash /tmp/virtuoso_config.sh && \
+RUN mkdir /usr/local/virtuoso-opensource/var/log && \
+    until service virtuoso-service start; do echo "Failed to start... Trying again."; done && \
+    sleep 15 && \
+    bash /tmp/virtuoso_config.sh && \
     rm /tmp/virtuoso_config.sh
 
 # Expõe as portas do Virtuoso
@@ -134,7 +134,7 @@ ENV JBOSS_DOWNLOAD_LINK "http://download.jboss.org/jbossas/7.1/jboss-as-7.1.1.Fi
 RUN apt-get install -y xmlstarlet && \
     apt-get install -y libsaxon-java libsaxonb-java libsaxonhe-java && \
     apt-get install -y libaugeas0 && \
-    apt-get install -y unzip bsdtar \
+    apt-get install -y unzip bsdtar && \
     # Instala o JBOSS
     mkdir /tmp/jboss_install && \
     cd /tmp/jboss_install && \
