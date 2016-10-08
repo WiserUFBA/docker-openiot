@@ -116,7 +116,7 @@ ADD virtuoso_config.sh /tmp/virtuoso_config.sh
 RUN mkdir /usr/local/virtuoso-opensource/var/log && \
     until service virtuoso-service start; do echo "Failed to start... Trying again."; done && \
     sleep 15 && \
-    bash /tmp/virtuoso_config.sh && \
+    until bash /tmp/virtuoso_config.sh; do echo "Failed to connect... trying again in 10 seconds..."; sleep 10; done && \
     rm /tmp/virtuoso_config.sh
 
 # Expõe as portas do Virtuoso
@@ -289,6 +289,7 @@ RUN mkdir /tmp/openiot && \
     ( service jboss-service start || \
       service jboss-service start || \
       service jboss-service start ) && \
+    sleep 20 && \
     JBOSS_CONFIGURATION="$JBOSS_HOME/standalone/configuration" && \
     cp ./utils/utils.commons/src/main/resources/security-config.ini "$JBOSS_CONFIGURATION" && \
     cp ./utils/utils.commons/src/main/resources/properties/openiot.properties "$JBOSS_CONFIGURATION" && \
@@ -321,13 +322,13 @@ RUN mkdir /tmp/openiot && \
     cd $OPENIOT_HOME/modules/sdum/sdum.core/ && \
     mvn -X jboss-as:deploy && \
     cd $OPENIOT_HOME/ui/ui.requestDefinition/ && \
-    mvn -X mvn clean package jboss-as:deploy && \
+    mvn -X clean package jboss-as:deploy && \
     cd $OPENIOT_HOME/ui/ui.requestPresentation/ && \
-    mvn -X mvn clean package jboss-as:deploy && \
+    mvn -X clean package jboss-as:deploy && \
     cd $OPENIOT_HOME/ui/ui.schemaeditor/ && \
-    mvn -X mvn clean package jboss-as:deploy && \
+    mvn -X clean package jboss-as:deploy && \
     cd $OPENIOT_HOME/ui/ide/ide.core/ && \
-    mvn -X mvn clean package jboss-as:deploy && \
+    mvn -X clean package jboss-as:deploy && \
     rm -r /tmp/openiot
 
 # Passo Final
