@@ -285,8 +285,9 @@ RUN mkdir /tmp/openiot && \
                 -n url \
                 -v "https://github.com/WiserUFBA/wiser-mvn-repo/raw/master/releases" ./pom.xml && \
     mvn -X clean install && \
-    service jboss-service start && \
-    service jboss-service start && \
+    ( service jboss-service start || \
+      service jboss-service start || \
+      service jboss-service start ) && \
     JBOSS_CONFIGURATION="$JBOSS_HOME/standalone/configuration" && \
     cp ./utils/utils.commons/src/main/resources/security-config.ini "$JBOSS_CONFIGURATION" && \
     cp ./utils/utils.commons/src/main/resources/properties/openiot.properties "$JBOSS_CONFIGURATION" && \
