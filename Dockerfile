@@ -148,7 +148,7 @@ RUN apt-get install -y xmlstarlet && \
 # Adiciona o script de inicialização do JBOSS e a configuração
 ADD jboss-service /etc/init.d/jboss-service
 ADD jboss-as.conf /etc/jboss-as/jboss-as.conf
-ADD welcome.tar.gz /tmp
+ADD welcome.tar.gz /tmp/welcome.tar.gz
 
 # Adiciona o Jboss a inicialização
 # Cria o usuario jboss e adiciona as permissões para a home do jboss
