@@ -345,7 +345,10 @@ ADD openiot.sh /openiot.sh
 # TODO: REMOVE ALL UNANTHED APPLICATIONS
 
 # Finaliza a instalação
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN chmod 755 /openiot.sh && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    echo "Finished compilation..."
 
 # Ponto de entrada
 CMD ["/bin/bash", "/openiot.sh"]
