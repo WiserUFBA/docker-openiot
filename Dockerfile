@@ -345,13 +345,15 @@ ADD openiot.sh /openiot.sh
 # TODO: REMOVE ALL UNANTHED APPLICATIONS
 
 # Finaliza a instalação
-RUN chmod 755 /openiot.sh && \
+RUN service jboss-service stop && \
+    service virtuoso-service stop && \
+    chmod 755 /openiot.sh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     echo "Finished compilation..."
 
 # Ponto de entrada
-CMD ["/bin/bash", "/openiot.sh"]
+CMD ["/openiot.sh && tail -F $JBOSS_HOME/standalone/log/server.log"]
 
 # References
 # https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
