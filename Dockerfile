@@ -353,7 +353,7 @@ RUN service jboss-service stop && \
     echo "Finished compilation..."
 
 # Ponto de entrada
-CMD ["/openiot-start.sh && tail -F $JBOSS_HOME/standalone/log/server.log"]
+CMD ["/openiot-start.sh"]
 
 # References
 # https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
