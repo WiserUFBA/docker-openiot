@@ -339,7 +339,7 @@ RUN until service jboss-service status ; do service jboss-service start; echo "S
 # Ultimas rotinas de compilação da imagem
 
 # Script de inicialização da aplicação
-ADD openiot.sh /openiot.sh
+ADD openiot-start.sh /openiot-start.sh
 
 # Remove diversas aplicações inúteis
 # TODO: REMOVE ALL UNANTHED APPLICATIONS
@@ -347,13 +347,13 @@ ADD openiot.sh /openiot.sh
 # Finaliza a instalação
 RUN service jboss-service stop && \
     service virtuoso-service stop && \
-    chmod 755 /openiot.sh && \
+    chmod 755 /openiot-start.sh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     echo "Finished compilation..."
 
 # Ponto de entrada
-CMD ["/openiot.sh && tail -F $JBOSS_HOME/standalone/log/server.log"]
+CMD ["/openiot-start.sh && tail -F $JBOSS_HOME/standalone/log/server.log"]
 
 # References
 # https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
