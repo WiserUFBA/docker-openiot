@@ -117,7 +117,8 @@ RUN mkdir /usr/local/virtuoso-opensource/var/log && \
     until service virtuoso-service start; do echo "Failed to start... Trying again."; done && \
     sleep 15 && \
     until bash /tmp/virtuoso_config.sh; do echo "Failed to connect... trying again in 10 seconds..."; sleep 10; done && \
-    rm /tmp/virtuoso_config.sh
+    rm /tmp/virtuoso_config.sh && \
+    service virtuoso-service stop || service virtuoso-service stop 
 
 # Expõe as portas do Virtuoso
 EXPOSE 8890
@@ -286,10 +287,6 @@ RUN mkdir /tmp/openiot && \
                 -v "https://github.com/WiserUFBA/wiser-mvn-repo/raw/master/releases" ./pom.xml && \
     export MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" && \
     mvn -X clean install && \
-    ( service jboss-service start || \
-      service jboss-service start || \
-      service jboss-service start ) && \
-    sleep 20 && \
     JBOSS_CONFIGURATION="$JBOSS_HOME/standalone/configuration" && \
     cp ./utils/utils.commons/src/main/resources/security-config.ini "$JBOSS_CONFIGURATION" && \
     cp ./utils/utils.commons/src/main/resources/properties/openiot.properties "$JBOSS_CONFIGURATION" && \
@@ -313,9 +310,12 @@ RUN mkdir /tmp/openiot && \
     mv /tmp/openiot/openiot $OPENIOT_HOME
 
 # Instalação dos Módulos do OpenIoT no Container JBoss
-RUN until service jboss-service status ; do service jboss-service start; echo "Started..."; done && \
+RUN until service virtuoso-service start; do echo "Failed to start... Trying again."; done && \
+    sleep 20 && \
+    until service jboss-service status ; do service jboss-service start; echo "Started..."; done && \
+    sleep 30 && \
     cd $OPENIOT_HOME/modules/lsm-light/lsm-light.server/ && \
-    mvn -X jboss-as:deploy && \
+    mvn -X jboss-as:deploy -Djboss-as.hostname=127.0.0.1 && \
     cd $OPENIOT_HOME/modules/security/security-server/ && \
     mvn -X jboss-as:deploy && \
     cd $OPENIOT_HOME/modules/security/security-management/ && \
@@ -332,7 +332,9 @@ RUN until service jboss-service status ; do service jboss-service start; echo "S
     mvn -X clean package jboss-as:deploy && \
     cd $OPENIOT_HOME/ui/ide/ide.core/ && \
     mvn -X clean package jboss-as:deploy && \
-    rm -r /tmp/openiot
+    rm -r /tmp/openiot && \
+    service jboss-service stop && \
+    ( service virtuoso-service stop || service virtuoso-service stop )
 
 # Passo Final
 # ---------------------------------------------------------------------------
@@ -345,9 +347,7 @@ ADD openiot-start.sh /openiot-start.sh
 # TODO: REMOVE ALL UNANTHED APPLICATIONS
 
 # Finaliza a instalação
-RUN service jboss-service stop && \
-    service virtuoso-service stop && \
-    chmod 755 /openiot-start.sh && \
+RUN chmod 755 /openiot-start.sh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     echo "Finished compilation..."
