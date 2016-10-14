@@ -370,10 +370,11 @@ CMD ["/openiot-start.sh"]
 # http://stackoverflow.com/questions/19335444/how-to-assign-a-port-mapping-to-an-existing-docker-container
 # http://stackoverflow.com/questions/6880902/start-jboss-7-as-a-service-on-linux
 # http://stackoverflow.com/questions/15630055/how-to-install-maven-3-on-ubuntu-15-10-15-04-14-10-14-04-lts-13-10-13-04-12-10-1
-# https://www.ivankrizsan.se/2015/08/08/creating-a-docker-image-with-ubuntu-and-java/
+# http://stackoverflow.com/questions/11617210/how-to-properly-import-a-selfsigned-certificate-into-java-keystore-that-is-avail
 # https://www.ctl.io/developers/blog/post/dockerfile-entrypoint-vs-cmd/
 # http://www.mundodocker.com.br/docker-exec/
 # https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
 # http://stackoverflow.com/questions/13578134/how-to-automate-keystore-generation-using-the-java-keystore-tool-w-o-user-inter
 # https://www.technomancy.org/xml/add-a-subnode-command-line-xmlstarlet/
 # http://www.thegeekstuff.com/2009/10/unix-sed-tutorial-how-to-execute-multiple-sed-commands
+# https://jbossdivers.wordpress.com/2012/11/20/habilitando-https-no-jboss-as-7-1-2-jboss-eap-6/
