@@ -118,7 +118,7 @@ RUN mkdir /usr/local/virtuoso-opensource/var/log && \
     sleep 15 && \
     until bash /tmp/virtuoso_config.sh; do echo "Failed to connect... trying again in 10 seconds..."; sleep 10; done && \
     rm /tmp/virtuoso_config.sh && \
-    service virtuoso-service stop || service virtuoso-service stop 
+    service virtuoso-service stop || service virtuoso-service stop
 
 # Expõe as portas do Virtuoso
 EXPOSE 8890
@@ -186,21 +186,21 @@ RUN mkdir $JBOSS_HOME/standalone/configuration/ssl && \
             -dname "$JBOSS_SSL_CONFIG" \
             -keyalg RSA \
             -keystore server.keystore \
-            -storepass changeit \
+            -storepass "$JBOSS_SSL_KEY" \
             -keypass "$JBOSS_SSL_KEY" && \
     keytool -export \
             -noprompt \
             -alias jbosskey \
-            -keypass "$JBOSS_SSL_KEY" \
             -file server.crt \
-            -storepass changeit \
+            -keypass "$JBOSS_SSL_KEY" \
+            -storepass "$JBOSS_SSL_KEY" \
             -keystore server.keystore && \
     keytool -import \
             -noprompt \
             -alias jbosscert \
-            -keypass "$JBOSS_SSL_KEY" \
             -file server.crt \
-            -storepass changeit \
+            -storepass "$JBOSS_SSL_KEY" \
+            -keypass "$JBOSS_SSL_KEY" \
             -keystore server.keystore && \
     keytool -import \
             -noprompt \
@@ -371,10 +371,11 @@ CMD ["/openiot-start.sh"]
 # http://stackoverflow.com/questions/6880902/start-jboss-7-as-a-service-on-linux
 # http://stackoverflow.com/questions/15630055/how-to-install-maven-3-on-ubuntu-15-10-15-04-14-10-14-04-lts-13-10-13-04-12-10-1
 # http://stackoverflow.com/questions/11617210/how-to-properly-import-a-selfsigned-certificate-into-java-keystore-that-is-avail
+# http://stackoverflow.com/questions/13578134/how-to-automate-keystore-generation-using-the-java-keystore-tool-w-o-user-inter
 # https://www.ctl.io/developers/blog/post/dockerfile-entrypoint-vs-cmd/
 # http://www.mundodocker.com.br/docker-exec/
 # https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
-# http://stackoverflow.com/questions/13578134/how-to-automate-keystore-generation-using-the-java-keystore-tool-w-o-user-inter
 # https://www.technomancy.org/xml/add-a-subnode-command-line-xmlstarlet/
 # http://www.thegeekstuff.com/2009/10/unix-sed-tutorial-how-to-execute-multiple-sed-commands
+# https://access.redhat.com/documentation/en-US/JBoss_Enterprise_Application_Platform/6/html/Administration_and_Configuration_Guide/Generate_a_SSL_Encryption_Key_and_Certificate.html
 # https://jbossdivers.wordpress.com/2012/11/20/habilitando-https-no-jboss-as-7-1-2-jboss-eap-6/
