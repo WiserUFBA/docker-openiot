@@ -25,7 +25,7 @@
 # Suite 330, Boston, MA 02111-1307 USA
 #
 ### BEGIN INIT INFO
-# Provides:          virtuoso-opensource-7.1
+# Provides:          jboss-as-7.1.1
 # Required-Start:    $network $local_fs $remote_fs
 # Required-Stop:     $remote_fs
 # Should-Start:      $named
@@ -122,9 +122,9 @@ start() {
 
 	if [ ! -z "$JBOSS_USER" ]; then
 		if [ -x /lib/lsb/init-functions ]; then
-			start-stop-daemon -user $JBOSS_USER LAUNCH_JBOSS_IN_BACKGROUND=1 JBOSS_PIDFILE=$JBOSS_PIDFILE $JBOSS_SCRIPT –b 0.0.0.0 -c $JBOSS_CONFIG > $JBOSS_CONSOLE_LOG 2>&1 &
+			start-stop-daemon -user $JBOSS_USER LAUNCH_JBOSS_IN_BACKGROUND=1 JBOSS_PIDFILE=$JBOSS_PIDFILE $JBOSS_SCRIPT -b 0.0.0.0 -c $JBOSS_CONFIG > $JBOSS_CONSOLE_LOG 2>&1 &
 		else
-			su - $JBOSS_USER –b 0.0.0.0 -c "LAUNCH_JBOSS_IN_BACKGROUND=1 JBOSS_PIDFILE=$JBOSS_PIDFILE $JBOSS_SCRIPT -c $JBOSS_CONFIG" > $JBOSS_CONSOLE_LOG 2>&1 &
+			su - $JBOSS_USER -c "LAUNCH_JBOSS_IN_BACKGROUND=1 JBOSS_PIDFILE=$JBOSS_PIDFILE $JBOSS_SCRIPT -b 0.0.0.0 -c $JBOSS_CONFIG" > $JBOSS_CONSOLE_LOG 2>&1 &
 		fi
 	fi
 
@@ -184,7 +184,6 @@ status() {
 			return 0
 		else
 			echo "$prog dead but pid file exists"
-			echo "Delete file $JBOSS_PIDFILE to avoid this error"
 			return 1
 		fi
 	fi
