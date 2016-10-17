@@ -354,6 +354,8 @@ RUN chmod 755 /openiot-init.sh && \
     apt-get clean && \
     mvn dependency:purge-local-repository -DactTransitively=false -DreResolve=false && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    rm -rf $JBOSS_HOME/standalone/configuration/standalone_xml_history && \
+    rm -rf $JBOSS_HOME/standalone/log/* /var/log/* && \
     echo "Finished compilation..."
 
 # Ponto de entrada
