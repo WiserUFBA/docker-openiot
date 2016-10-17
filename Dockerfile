@@ -349,6 +349,7 @@ ADD openiot-init.sh /openiot-init.sh
 # Finaliza a instalação
 RUN chmod 755 /openiot-init.sh && \
     apt-get clean && \
+    mvn dependency:purge-local-repository -DactTransitively=false -DreResolve=false && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     echo "Finished compilation..."
 
@@ -372,6 +373,7 @@ CMD ["/openiot-init.sh"]
 # http://stackoverflow.com/questions/15630055/how-to-install-maven-3-on-ubuntu-15-10-15-04-14-10-14-04-lts-13-10-13-04-12-10-1
 # http://stackoverflow.com/questions/11617210/how-to-properly-import-a-selfsigned-certificate-into-java-keystore-that-is-avail
 # http://stackoverflow.com/questions/13578134/how-to-automate-keystore-generation-using-the-java-keystore-tool-w-o-user-inter
+# http://stackoverflow.com/questions/7408545/how-do-you-clear-apache-mavens-cache
 # https://www.ctl.io/developers/blog/post/dockerfile-entrypoint-vs-cmd/
 # http://www.mundodocker.com.br/docker-exec/
 # https://www.digitalocean.com/community/tutorials/docker-explained-using-dockerfiles-to-automate-building-of-images
