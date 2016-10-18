@@ -3,7 +3,7 @@
 # Forçadamente modifica a senha do Virtuoso
 # Modifica a senha do usuaro dba para a variavel de ambiente
 printf "SET PASSWORD dba %s;\n" "$VIRTUOSO_DBA_PASS" > /tmp/virtuoso_dba
-until isql -U dba -P dba < /tmp/virtuoso_dba
+while isql -U dba -P dba < /tmp/virtuoso_dba
 do
     echo "Failed to change password... Trying again..."
 done
