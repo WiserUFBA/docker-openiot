@@ -354,7 +354,7 @@ RUN apt-get clean && \
 COPY openiot.sh /openiot.sh
 
 # Ponto de entrada
-CMD ["/openiot/openiot.sh"]
+CMD ["/openiot.sh"]
 
 # References
 # https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
