@@ -97,7 +97,7 @@ RUN cd /tmp && \
 ENV PATH $VIRTUOSO_HOME/bin/:$PATH
 
 # Adiciona script de inicialização
-ADD virtuoso-service /etc/init.d/virtuoso-service
+COPY virtuoso-service /etc/init.d/virtuoso-service
 
 # Adiciona o script de inicialização do virtuoso
 # Cria o usuario virtuoso e adiciona as permissões para a DB
@@ -109,7 +109,7 @@ RUN chmod 755 /etc/init.d/virtuoso-service && \
     chown -R virtuoso:virtuoso $VIRTUOSO_HOME
 
 # Adiciona a rotina padrão de execução
-ADD virtuoso_config.sh /tmp/virtuoso_config.sh
+COPY virtuoso_config.sh /tmp/virtuoso_config.sh
 
 # Inicializa o serviço do virtuoso, mesmo que ele apresente erros
 # Executa a configuração do virtuoso e remove o arquivo de configuração
@@ -147,8 +147,8 @@ RUN apt-get install -y xmlstarlet && \
     mkdir /var/log/jboss-as/
 
 # Adiciona o script de inicialização do JBOSS e a configuração
-ADD jboss-service /etc/init.d/jboss-service
-ADD jboss-as.conf /etc/jboss-as/jboss-as.conf
+COPY jboss-service /etc/init.d/jboss-service
+COPY jboss-as.conf /etc/jboss-as/jboss-as.conf
 ADD welcome-content.tar.gz /tmp/
 
 # Adiciona o Jboss a inicialização
@@ -340,22 +340,21 @@ RUN until service virtuoso-service start; do echo "Failed to start... Trying aga
 # ---------------------------------------------------------------------------
 # Ultimas rotinas de compilação da imagem
 
-# Script de inicialização da aplicação
-ADD openiot.sh /openiot.sh
-
 # Remove diversas aplicações inúteis
 # TODO: REMOVE ALL UNANTHED APPLICATIONS
 
 # Finaliza a instalação
-RUN chmod 755 /openiot.sh && \
-    apt-get clean && \
+RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     rm -rf $JBOSS_HOME/standalone/configuration/standalone_xml_history && \
     rm -rf $JBOSS_HOME/standalone/log/* /var/log/* && \
     echo "Finished compilation..."
 
+# Script de inicialização da aplicação
+COPY openiot.sh /openiot.sh
+
 # Ponto de entrada
-CMD ["/openiot.sh"]
+CMD ["/openiot/openiot.sh"]
 
 # References
 # https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
