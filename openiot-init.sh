@@ -15,4 +15,4 @@ sleep 5
 service jboss-service start
 
 # Imprime o log para manter a instância ativa
-tail -F $JBOSS_HOME/standalone/log/server.log
+tail -F "$JBOSS_HOME/standalone/log/server.log"
