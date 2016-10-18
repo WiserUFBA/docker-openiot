@@ -311,30 +311,27 @@ RUN mkdir /tmp/openiot && \
 
 # Instalação dos Módulos do OpenIoT no Container JBoss
 RUN until service virtuoso-service start; do echo "Failed to start... Trying again."; done && \
-    sleep 20 && \
+    sleep 30 && \
     until service jboss-service status ; do service jboss-service start; echo "Started..."; done && \
     sleep 30 && \
-    service jboss-service stop && \
-    until service jboss-service status ; do service jboss-service start; echo "Started..."; done && \
-    sleep 120 && \
-    cd $OPENIOT_HOME/modules/lsm-light/lsm-light.server/ && \
-    mvn -X jboss-as:deploy && \
-    cd $OPENIOT_HOME/modules/security/security-server/ && \
-    mvn -X jboss-as:deploy && \
-    cd $OPENIOT_HOME/modules/security/security-management/ && \
-    mvn -X jboss-as:deploy && \
-    cd $OPENIOT_HOME/modules/scheduler/scheduler.core/ && \
-    mvn -X jboss-as:deploy && \
-    cd $OPENIOT_HOME/modules/sdum/sdum.core/ && \
-    mvn -X jboss-as:deploy && \
-    cd $OPENIOT_HOME/ui/ui.requestDefinition/ && \
-    mvn -X clean package jboss-as:deploy && \
-    cd $OPENIOT_HOME/ui/ui.requestPresentation/ && \
-    mvn -X clean package jboss-as:deploy && \
-    cd $OPENIOT_HOME/ui/ui.schemaeditor/ && \
-    mvn -X clean package jboss-as:deploy && \
-    cd $OPENIOT_HOME/ui/ide/ide.core/ && \
-    mvn -X clean package jboss-as:deploy && \
+    cd "$OPENIOT_HOME/modules/lsm-light/lsm-light.server/" && \
+    until mvn -X jboss-as:deploy ; do echo "Failed deploying LSM... trying again."; done && \
+    cd "$OPENIOT_HOME/modules/security/security-server/" && \
+    until mvn -X jboss-as:deploy ; do echo "Failed deploying Security Server... trying again."; done && \
+    cd "$OPENIOT_HOME/modules/security/security-management/" && \
+    until mvn -X jboss-as:deploy ; do echo "Failed deploying Security Management... trying again."; done && \
+    cd "$OPENIOT_HOME/modules/scheduler/scheduler.core/" && \
+    until mvn -X jboss-as:deploy ; do echo "Failed deploying Scheduler Core... trying again."; done && \
+    cd "$OPENIOT_HOME/modules/sdum/sdum.core/" && \
+    until mvn -X jboss-as:deploy ; do echo "Failed deploying SDUM Core... trying again."; done && \
+    cd "$OPENIOT_HOME/ui/ui.requestDefinition/" && \
+    until mvn -X clean package jboss-as:deploy ; do echo "Failed deploying requestDefinition... trying again."; done && \
+    cd "$OPENIOT_HOME/ui/ui.requestPresentation/" && \
+    until mvn -X clean package jboss-as:deploy ; do echo "Failed deploying requestPresentation... trying again."; done && \
+    cd "$OPENIOT_HOME/ui/ui.schemaeditor/" && \
+    until mvn -X clean package jboss-as:deploy ; do echo "Failed deploying schemaeditor... trying again."; done && \
+    cd "$OPENIOT_HOME/ui/ide/ide.core/" && \
+    until mvn -X clean package jboss-as:deploy ; do echo "Failed deploying IDE Core... trying again."; done && \
     rm -r /tmp/openiot && \
     service jboss-service stop && \
     ( service virtuoso-service stop || service virtuoso-service stop )
