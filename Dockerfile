@@ -341,13 +341,13 @@ RUN until service virtuoso-service start; do echo "Failed to start... Trying aga
 # Ultimas rotinas de compilação da imagem
 
 # Script de inicialização da aplicação
-ADD openiot-init.sh /openiot-init.sh
+ADD openiot.sh /openiot.sh
 
 # Remove diversas aplicações inúteis
 # TODO: REMOVE ALL UNANTHED APPLICATIONS
 
 # Finaliza a instalação
-RUN chmod 755 /openiot-init.sh && \
+RUN chmod 755 /openiot.sh && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     rm -rf $JBOSS_HOME/standalone/configuration/standalone_xml_history && \
@@ -355,7 +355,7 @@ RUN chmod 755 /openiot-init.sh && \
     echo "Finished compilation..."
 
 # Ponto de entrada
-CMD ["/openiot-init.sh"]
+CMD ["/openiot.sh"]
 
 # References
 # https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
