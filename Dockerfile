@@ -318,7 +318,7 @@ RUN until service virtuoso-service start; do echo "Failed to start... Trying aga
     until service jboss-service status ; do service jboss-service start; echo "Started..."; done && \
     sleep 120 && \
     cd $OPENIOT_HOME/modules/lsm-light/lsm-light.server/ && \
-    mvn -X jboss-as:deploy -Djboss-as.hostname=127.0.0.1 && \
+    mvn -X jboss-as:deploy && \
     cd $OPENIOT_HOME/modules/security/security-server/ && \
     mvn -X jboss-as:deploy && \
     cd $OPENIOT_HOME/modules/security/security-management/ && \
