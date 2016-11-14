@@ -5,6 +5,11 @@
 # Project SmartUFBA
 # Version 1.0.0
 # Description:
+# 	This is the default dockerfile for deploy OpenIoT Application with docker.
+#   It's already totally configured, and prepared for integration with X-GSN,
+#   Which you should do it manually after the deploy.
+#
+# Descricao:
 #       Esse é o Dockerfile de instalação de um container OpenIoT
 #   totalmente configurado. O objetivo deste container é o de
 #   se tornar o modelo padrão de deploy da aplicação OpenIoT
@@ -20,7 +25,21 @@ MAINTAINER Jeferson Lima <jefersonlimaa@dcc.ufba.br>
 # precisamos configurar algumas variavéis de ambiente para a correta
 # execução do OpenIoT
 
+# Step 1 - Environment Preparation
+# ---------------------------------------------------------------------------
+# This step will configure with the environment used by OpenIoT Application
+# it consists of Ubuntu Linux 14.04 with Maven 3.0, Java 7 and Latest Virtuoso
+# release. 
+# You can change OpenIoT branch here if you wanna, by default the OpenIoT
+# Branch selected is the development branch, but you can change this.
+
+# Como em 'https://github.com/OpenIotOrg/openiot/wiki/Installation-Guide'
+# precisamos configurar algumas variavéis de ambiente para a correta
+# execução do OpenIoT
+
 # Home das Aplicações necessárias
+# ---------------------------------------------------------------------------
+# Home of the applications needed
 ENV JAVA_HOME /usr/lib/jvm/java-7-oracle
 ENV MAVEN_HOME /usr/share/maven3
 ENV VIRTUOSO_HOME /usr/local/virtuoso-opensource
@@ -28,9 +47,11 @@ ENV JBOSS_HOME /opt/jboss
 ENV OPENIOT_HOME /opt/openiot
 
 # Usuario Administrador Virtuoso
+# Default DBA Virtuoso pass 
 ENV VIRTUOSO_DBA_PASS wiser2014
 
 # Geração de chave auto assinada para o JBOSS
+# Configuration of JBOSS self signed SSL KEY
 ENV JBOSS_SSL_KEY "wiser2014"
 ENV JBOSS_SSL_ADDRESS "localhost"
 ENV JBOSS_SSL_ORGANIZATION "WiserUFBA"
@@ -42,6 +63,12 @@ ENV JBOSS_SSL_COUNTRY "BR"
 # 2 Passo - Instalação dos pré requisitos comuns
 # ---------------------------------------------------------------------------
 # Instalar os prerequisitos globais como alguns ppa e o básico para instalação
+
+# Step 2 - Pre Installation of requisites for OpenIoT Container
+# ---------------------------------------------------------------------------
+# This step will install base requisites for OpenIoT container, like add the 
+# java 8 PPA, maven 3 PPA update the sytem (hmmm this not seeming to be a good idea)
+# and update sources repo of apt
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y  software-properties-common && \
@@ -49,15 +76,23 @@ RUN apt-get update && \
     apt-add-repository -y ppa:andrei-pozolotin/maven3 && \
     apt-get update
 
-# 3 Passo - Instalação do Java 8 e Maven
+# 3 Passo - Instalação do Java 7 e Maven
 # ---------------------------------------------------------------------------
 # Instalação do Java 8
 
-# Para a Instalação do JAVA 8 é necessário primeiro aceitar a licença do java
+# Step 3 - Java 7 and Maven 3 Installation
+# ---------------------------------------------------------------------------
+# This step will install the latest java 7 and Maven 3
+
+# Para a Instalação do JAVA 7 é necessário primeiro aceitar a licença do java
+# ---------------------------------------------------------------------------
+# Global accept to oracle license on ubuntu
 RUN echo "oracle-java7-installer shared/accepted-oracle-license-v1-1 " \
          "select true" | /usr/bin/debconf-set-selections
 
 # Agora instalamos o Java 7 e o Maven 3
+# ---------------------------------------------------------------------------
+# Installation of latest oracle java 7 and maven 3
 RUN apt-get install -y oracle-java7-installer && \
     apt-get install -y oracle-java7-set-default && \
     apt-get install -y maven3
@@ -66,7 +101,12 @@ RUN apt-get install -y oracle-java7-installer && \
 # ---------------------------------------------------------------------------
 # Instalação Básica do Virtuoso
 
+# Step 4 - Virtuoso Installation
+# ---------------------------------------------------------------------------
+# Basic installation of Virtuoso DB
+
 # Pré requisitos do virtuoso
+# Requisites for Virtuoso DB
 RUN apt-get install -y build-essential debhelper autotools-dev && \
     apt-get install -y autoconf automake unzip wget net-tools && \
     apt-get install -y git libtool flex bison gperf gawk m4 && \
@@ -79,6 +119,9 @@ ENV VIRTUOSO_VERSION "7.2.4.2"
 ENV VIRTUOSO_RELEASE_LINK "https://github.com/openlink/virtuoso-opensource/releases/download/v7.2.4.2/virtuoso-opensource-7.2.4.2.tar.gz"
 
 # Configuração compilação e instalação do Virtuoso
+# ---------------------------------------------------------------------------
+# This command will install and configure virtuoso, remember that this will compile
+# virtuoso first
 RUN cd /tmp && \
     mkdir virtuoso_install && \
     cd virtuoso_install && \
@@ -94,13 +137,18 @@ RUN cd /tmp && \
     rm -r /tmp/virtuoso_install
 
 # Adiciona o virtuoso
+# Add Virtuoso home to Linux PATH
 ENV PATH $VIRTUOSO_HOME/bin/:$PATH
 
 # Adiciona script de inicialização
+# Add virtuoso service script
 COPY virtuoso-service /etc/init.d/virtuoso-service
 
 # Adiciona o script de inicialização do virtuoso
 # Cria o usuario virtuoso e adiciona as permissões para a DB
+# ---------------------------------------------------------------------------
+# Configure initialization service of Virtuso and added the correct permissions
+# for properly work.
 RUN chmod 755 /etc/init.d/virtuoso-service && \
     chown root:root /etc/init.d/virtuoso-service && \
     update-rc.d virtuoso-service defaults && \
@@ -109,10 +157,14 @@ RUN chmod 755 /etc/init.d/virtuoso-service && \
     chown -R virtuoso:virtuoso $VIRTUOSO_HOME
 
 # Adiciona a rotina padrão de execução
+# ---------------------------------------------------------------------------
+# Add the standar virtuoso configuration
 COPY virtuoso_config.sh /tmp/virtuoso_config.sh
 
 # Inicializa o serviço do virtuoso, mesmo que ele apresente erros
 # Executa a configuração do virtuoso e remove o arquivo de configuração
+# ---------------------------------------------------------------------------
+# Initialize virtuoso db, check if there no errors and them configure it
 RUN mkdir /usr/local/virtuoso-opensource/var/log && \
     until service virtuoso-service start; do echo "Failed to start... Trying again."; done && \
     sleep 15 && \
@@ -121,6 +173,8 @@ RUN mkdir /usr/local/virtuoso-opensource/var/log && \
     service virtuoso-service stop || service virtuoso-service stop
 
 # Expõe as portas do Virtuoso
+# ---------------------------------------------------------------------------
+# Expose Virtuoso Ports
 EXPOSE 8890
 EXPOSE 1111
 
@@ -128,10 +182,16 @@ EXPOSE 1111
 # ---------------------------------------------------------------------------
 # Instalação do JBOSS
 
-# Link de Download JBOSS
+# Step 5 - JBoss Installation
+# ---------------------------------------------------------------------------
+# JBoss Installation
+
+# JBOSS Download Link
 ENV JBOSS_DOWNLOAD_LINK "http://download.jboss.org/jbossas/7.1/jboss-as-7.1.1.Final/jboss-as-7.1.1.Final.zip"
 
 # Instala os pré-requisitos
+# ---------------------------------------------------------------------------
+# Install the applications needed by JBoss
 RUN apt-get install -y xmlstarlet && \
     apt-get install -y libsaxon-java libsaxonb-java libsaxonhe-java && \
     apt-get install -y libaugeas0 && \
@@ -147,6 +207,8 @@ RUN apt-get install -y xmlstarlet && \
     mkdir /var/log/jboss-as/
 
 # Adiciona o script de inicialização do JBOSS e a configuração
+# ---------------------------------------------------------------------------
+# Add JBoss Service and welcome content
 COPY jboss-service /etc/init.d/jboss-service
 COPY jboss-as.conf /etc/jboss-as/jboss-as.conf
 ADD welcome-content.tar.gz /tmp/
@@ -154,6 +216,10 @@ ADD welcome-content.tar.gz /tmp/
 # Adiciona o Jboss a inicialização
 # Cria o usuario jboss e adiciona as permissões para a home do jboss
 # Remove a tela antiga do JBoss
+# ---------------------------------------------------------------------------
+# Add JBoss initialization service in the system
+# Create JBoss user and change permissions of the JBoss home folder
+# And change the correct welcome content
 RUN chmod 755 /etc/init.d/jboss-service && \
     chown root:root /etc/init.d/jboss-service && \
     update-rc.d jboss-service defaults && \
@@ -163,6 +229,8 @@ RUN chmod 755 /etc/init.d/jboss-service && \
     mv /tmp/welcome-content "$JBOSS_HOME/welcome-content"
 
 # Expõe a porta do JBOSS
+# ---------------------------------------------------------------------------
+# Expose JBoss Ports
 EXPOSE 8080
 EXPOSE 8443
 
@@ -170,7 +238,11 @@ EXPOSE 8443
 # ---------------------------------------------------------------------------
 # Instalação completa do OpenIoT e seus modulos
 
-# Configuração do Jboss
+# Step 6 - OpenIoT Installation
+# ---------------------------------------------------------------------------
+# Complete installation of OpenIoT and OpenIoT modules
+
+# JBoss Configuration
 RUN mkdir $JBOSS_HOME/standalone/configuration/ssl && \
     JBOSS_SSL_CONFIG="CN=$JBOSS_SSL_ADDRESS," && \
     JBOSS_SSL_CONFIG="$JBOSS_SSL_CONFIG OU=$JBOSS_SSL_ORGANIZATION_UNITY," && \
@@ -259,11 +331,11 @@ RUN mkdir $JBOSS_HOME/standalone/configuration/ssl && \
 # OpenIoT Installation Link
 ENV OPENIOT_LINK https://github.com/OpenIotOrg/openiot.git
 
-# Versão do OpenIoT
+# OpenIoT Version
 ENV OPENIOT_BRANCH develop
 # ENV OPENIOT_BRANCH master
 
-# Compilação dos modulos do OpenIoT
+# OpenIoT Compilation
 RUN mkdir /tmp/openiot && \
     cd /tmp/openiot && \
     git clone --branch $OPENIOT_BRANCH $OPENIOT_LINK && \
@@ -310,6 +382,8 @@ RUN mkdir /tmp/openiot && \
     mv /tmp/openiot/openiot $OPENIOT_HOME
 
 # Instalação dos Módulos do OpenIoT no Container JBoss
+# ---------------------------------------------------------------------------
+# Configuration and Installation of OpenIoT Modules on JBoss Container
 RUN until service virtuoso-service start; do echo "Failed to start... Trying again."; done && \
     sleep 30 && \
     until service jboss-service status ; do service jboss-service start; echo "Started..."; done && \
@@ -340,10 +414,16 @@ RUN until service virtuoso-service start; do echo "Failed to start... Trying aga
 # ---------------------------------------------------------------------------
 # Ultimas rotinas de compilação da imagem
 
+# Final Step
+# ---------------------------------------------------------------------------
+# Last routines of image compilation
+
 # Remove diversas aplicações inúteis
 # TODO: REMOVE ALL UNANTHED APPLICATIONS
 
 # Finaliza a instalação
+# ---------------------------------------------------------------------------
+# Finished Installation
 RUN apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
     rm -rf $JBOSS_HOME/standalone/configuration/standalone_xml_history && \
@@ -351,9 +431,13 @@ RUN apt-get clean && \
     echo "Finished compilation..."
 
 # Script de inicialização da aplicação
+# ---------------------------------------------------------------------------
+# OpenIoT Start Script
 COPY openiot.sh /openiot.sh
 
 # Ponto de entrada
+# ---------------------------------------------------------------------------
+# Entry point of this appplication
 CMD ["/openiot.sh"]
 
 # References
