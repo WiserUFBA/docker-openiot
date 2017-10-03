@@ -381,6 +381,7 @@ RUN mkdir /tmp/openiot && \
 	    -e "s/lsm-light\.server\.connection\.password=.*$/lsm-light\.server\.connection\.password=$VIRTUOSO_DBA_PASS/g" \
 	    -e "s/lsm-light\.server\.localMetaGraph.*$/lsm-light\.server\.localMetaGraph\ =\ http\:\/\/openiot.eu\/OpenIoT\/sensormeta#/g" \
 	    -e "s/lsm-light\.server\.localDataGraph.*$/lsm-light\.server\.localDataGraph\ =\ http\:\/\/openiot.eu\/OpenIoT\/sensordata#/g" \
+            -e "s/lsm\.deri\.ie/localhost\:8080/g" \
 		"$JBOSS_CONFIGURATION/openiot.properties" && \
     cd / && \
     mv /tmp/openiot/openiot $OPENIOT_HOME
